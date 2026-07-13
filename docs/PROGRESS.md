@@ -5,6 +5,24 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — L5 sentinel + gap-closing handoff (parallel lane)
+
+- **Gap-closing FANNED OUT:** Grant handed a fresh Fable terminal the
+  onboarding prompt (whole vision + canon pointers + per-platform gaps). It's
+  running; it rotates through platform repos closing gaps. docs/GAP-CLOSING.md
+  = its master menu.
+- **This lane's PARALLEL, non-colliding work (new files only):**
+  - `docs/GAP-CLOSING.md` — the master gap menu (every platform: repo, gaps,
+    handoff, impact order).
+  - **L5 coverage-parity checker** `loom/coverage.py` (+8 tests) — the standing
+    sentinel: PHANTOM (manifest binds a dead route = bug) + UNCOVERED (served
+    route not in manifest = candidate). Auto-joins make check via pytest.
+  - `docs/coverage-report-2026-07-13.md` — ran it fleet-wide: **ZERO real
+    phantom bindings** (2 flagged = verified-false extractor artifacts: FastAPI
+    prefix non-resolution + Synapse external). Candidate menu per platform.
+- make check now 62 tests. **⚠️ Two lanes now write windy-contracts — keep
+  parallel work to NEW files; pull before editing PROGRESS.md.**
+
 ## 2026-07-13 (night) — Fly native server: FULL Capability Plane (agent-host DONE)
 
 - **windy-agent #286: build_registry() now runs the real boot sequence** →
