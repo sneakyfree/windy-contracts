@@ -14,7 +14,9 @@ enforces law:
 | Shared conformance suite (extracted from windytalk @ `9360058`) | `conformance/mcp-conformance.v1.json` | **extracted** — per-platform drivers come with L3 |
 | The Loom (`loom/`): validator | `uv run python -m loom.validate <manifest>` | **live** — `make check` gates it |
 | The Loom: generator (manifest → MCP packet + Python twin + conformance driver) | `uv run python -m loom.generate <manifest> <weave.json> <outdir>` | **live** — smoke-proven: woven packet speaks real MCP |
-| `surfaces.json` discovery-registry schema | `schema/surfaces/` | L2 |
+| `surfaces.json` discovery-registry schema + writer | `schema/surfaces.v1.schema.json`, `loom/register.py` | **live** |
+| Steamroller: fleet version manifest + reconcile reader | `schema/fleet-version.v1.schema.json`, `loom/discovery.py` | **live** — "land on a box, enumerate every knob, know what's stale" |
+| Account-server EPT discovery query (cloud surfaces) | spec only | L2 — needs account-server work (identity-critical; spec'd, not built) |
 | Provenance / superseded drafts | `docs/archive/` | quarantined — banners name ADR-060 as canon |
 
 ## The one-sentence objective
