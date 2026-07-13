@@ -5,6 +5,26 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — 🔑 Fly-as-doctor: the mcp.* client (loop closed)
+
+- **windy-agent #285 merged: the mcp.* client** — Fly can now DRIVE every
+  woven surface. `mcp.list_servers` / `mcp.list_tools` / `mcp.call`. This is
+  the piece that makes the whole instrumented fleet operable by grandma's
+  agent ("fix my VPS" → real tool-call chain).
+- Security (foreign servers = prompt-injection surface), all tested:
+  ALLOWLIST-only, INDIRECTION (foreign tools never auto-merged into Fly's
+  tool list — only via mcp.call; descriptions returned as flagged untrusted
+  data), BAND (mcp.* = TRUSTED, per-server band_ceiling clamped ≥ TRUSTED,
+  mcp.call floor = strictest server; SANDBOX/USER never see mcp.*), AUDIT on
+  every call. Transport behind _CONNECTOR (opt-in mcp SDK). Inert by default
+  (no servers configured → nothing connects; WINDY_MCP_CLIENT=0 disables).
+  10 new tests incl. an injection-in-description case; 503 boot/capability
+  tests green, zero regressions.
+- **⚠️ SECURITY-SURFACE PR self-merged per standing authority — worth Grant's
+  eyes; inert until he configures [mcp_client.servers].**
+- **Both halves of Route C now exist: Fly-as-patient (native MCP server,
+  #282) + Fly-as-doctor (mcp.* client, #285).** The agent-host is complete.
+
 ## 2026-07-13 (night) — 🏁 FLEET PROCESSION COMPLETE: Translate + Admin
 
 - **Translate** (windy-pro #233): internal Node support svc (loopback:8099).
