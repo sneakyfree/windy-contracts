@@ -1,0 +1,50 @@
+{
+  "contract": "ops.mcp.v1",
+  "doctrine": "ADR-060 v1.0",
+  "product": "windy-admin",
+  "class": "cloud",
+  "mcp_protocol": "2025-06-18",
+  "$comment": "Windy Admin ops surface — Class C, the LAST procession platform. admin.windyword.ai is the ecosystem's super-admin dashboard + telemetry ingest. Notable connection: admin ALREADY exposes GET /dashboard/fleet — a live '/version fan-out' across the whole fleet — which is the natural home for the Steamroller's fleet-version PUBLISHER (L2 deferred item). The dashboards + ingest + member/cost/audit surfaces are admin's PRODUCT and stay out per §2; this contract is admin's own health + the fleet read. get_capabilities → /dashboard/fleet is admin-gated → band_floor TRUSTED.",
+  "baseline_mapping": {
+    "get_health": { "status": "implemented", "maps_to": "GET /health", "note": "checks the admin DB (SELECT 1)." },
+    "get_status": { "status": "implemented", "maps_to": "GET /version" },
+    "get_capabilities": { "status": "implemented", "maps_to": "GET /dashboard/fleet", "note": "admin's signature read: a live /version fan-out across every platform — which services are up and on what build. Admin-gated (TRUSTED). This is where the Steamroller fleet-version publisher should live (L2)." },
+    "get_config": { "status": "gap" },
+    "get_logs": { "status": "gap", "note": "content-free; the /events surfaces are telemetry, not logs." },
+    "run_selftest": { "status": "gap" },
+    "reconnect": { "status": "unsupported" },
+    "restart_app": { "status": "gap", "note": "out-of-band; ops plane outside the patient." },
+    "enter_safe_mode": { "status": "unsupported" },
+    "exit_safe_mode": { "status": "unsupported" },
+    "set_setting": { "status": "gap", "note": "alert thresholds/flags are mutable via product routes — expose via ops later if useful." },
+    "check_for_update": { "status": "gap" },
+    "apply_update": { "status": "gap", "note": "SSH-free redeploy hook; §7." },
+    "reset_to_defaults": { "status": "unsupported", "note": "holds the ecosystem's telemetry + audit history." }
+  },
+  "tools": [
+    {
+      "name": "get_health",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "The FIRST call when the admin dashboard or telemetry ingest seems down. Liveness of Windy Admin, including a real check that its database is reachable.",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "transport": { "method": "GET", "path": "/health" }
+    },
+    {
+      "name": "get_status",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "Read Windy Admin's deployment identity — which build of the admin panel is serving right now. Use this to confirm a fix actually deployed.",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "transport": { "method": "GET", "path": "/version" }
+    },
+    {
+      "name": "get_capabilities",
+      "tier": "auto_allow",
+      "band_floor": "TRUSTED",
+      "description": "Get the whole ecosystem's fleet status in one call — a live fan-out that asks every Windy platform which build it is running and whether it is up. The single best 'is the whole fleet healthy' view. Admin-only.",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "transport": { "method": "GET", "path": "/dashboard/fleet" }
+    }
+  ]
+}
