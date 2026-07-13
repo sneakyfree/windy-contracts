@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sneakyfree/windy-contracts/schema/surfaces.v1.schema.json",
+  "title": "Windy local discovery registry (~/.windy/surfaces.json), v1",
+  "$comment": "ADR-060 §3.8 — one read, every knob. Every Class D product writes its entry at startup and removes it on clean shutdown. File mode 0600. Readers PROBE BEFORE TRUST: an entry is believed only after its surface's get_health answers; a dead port is stale, not gospel. Cloud discovery is NOT this file — it is one account-server query keyed by EPT.",
+  "type": "object",
+  "required": ["surfaces"],
+  "properties": {
+    "surfaces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["product", "version", "contract", "http"],
+        "properties": {
+          "product": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "version": { "type": "string", "$comment": "product version, e.g. 1.7.0" },
+          "class": { "type": "string", "enum": ["desktop", "cloud", "agent-host"] },
+          "contract": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*\\.mcp\\.v[0-9]+$",
+            "$comment": "which control contract this surface speaks, e.g. control.mcp.v1"
+          },
+          "doctrine": { "type": "string", "$comment": "e.g. 'ADR-060 v1.0'" },
+          "http": {
+            "type": "string",
+            "pattern": "^http://127\\.0\\.0\\.1:[0-9]+",
+            "$comment": "native transport base — loopback ONLY in this file, by schema"
+          },
+          "mcp": {
+            "type": "string",
+            "$comment": "how an MCP client attaches, e.g. 'stdio:npx windy-talk-mcp' or a streamable-http URL"
+          },
+          "token_path": {
+            "type": "string",
+            "$comment": "where the per-install bearer token lives (0600). Absent = surface predates token auth."
+          },
+          "health": {
+            "type": "string",
+            "default": "/invoke get_health",
+            "$comment": "how a reader probes liveness before trusting this entry"
+          },
+          "pid": { "type": "integer", "$comment": "optional; helps readers reap stale entries" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
