@@ -63,6 +63,26 @@
             "type": "string",
             "enum": ["SANDBOX", "USER", "TRUSTED", "OWNER"],
             "$comment": "Minimum caller band that DISCOVERS this tool (ADR-060 §3.5 band-filtered discovery). Default when absent: USER for auto_allow reads, TRUSTED for mutations — pinned in schema/band-ei-mapping.v1.json."
+          },
+          "transport": {
+            "type": "object",
+            "$comment": "GEN-1 ESCAPE HATCH (ADR-060 §4 'hand-written escape hatches'). Absent → the uniform default: POST /invoke {name, arguments} (greenfield/Class-C surfaces implement one dispatcher). Present → the Loom binds this tool to a bespoke REST route on an already-hardened Gen-1 surface (e.g. Windy Word's :18765), so the live app is never rewritten to add /invoke. windy-word-mcp already maps tools to routes this way in production; this formalizes it.",
+            "required": ["method", "path"],
+            "properties": {
+              "method": { "type": "string", "enum": ["GET", "POST"] },
+              "path": { "type": "string", "pattern": "^/" },
+              "arg_mapping": {
+                "type": "string",
+                "enum": ["query", "body", "none"],
+                "$comment": "How inputSchema args reach the route. Default: GET→query, POST→body. 'none' for argless routes."
+              }
+            },
+            "additionalProperties": false
+          },
+          "baseline_status": {
+            "type": "string",
+            "enum": ["implemented", "unsupported", "gap"],
+            "$comment": "For 13-knob-baseline tools only. 'implemented' = live route bound. 'unsupported' = genuinely N/A for this product (tri-state, ADR-060 §3.3). 'gap' = SHOULD exist but doesn't yet — this is the platform's punch list, surfaced honestly rather than hidden. A 'gap' tool is still listed (so an agent knows it's coming) but its transport may be absent."
           }
         },
         "additionalProperties": true

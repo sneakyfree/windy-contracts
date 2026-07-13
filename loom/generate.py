@@ -108,34 +108,71 @@ export function authHeaders() {{
 
     base_env = weave["http"].get("base_env", "WINDY_CONTROL_URL")
     client_js = f"""// {_GENERATED_BANNER}
-// Native-transport client for {product}: every MCP tool proxies
-// POST /invoke on the platform's control surface (ADR-060 §3.2) —
-// one implementation of every knob, two languages over it.
+// Native-transport client for {product}. Each tool reaches the SAME live
+// implementation the human UI uses (ADR-060 §1). Greenfield tools proxy
+// POST /invoke {{name, arguments}}; Gen-1 tools that declare a `transport`
+// binding call their bespoke REST route, so an already-hardened surface
+// (e.g. Windy Word :18765) is never rewritten. The route table is derived
+// from the embedded manifest, so it cannot drift from tools/list.
 {auth_js}
 const BASE = (process.env.{base_env} || {json.dumps(weave['http']['base_default'])}).replace(/\\/$/, '');
 
-export async function invoke(name, args, timeoutMs = 15000) {{
+// name -> {{ method, path, arg_mapping }} for tools with an explicit binding.
+export function buildRouteTable(manifest) {{
+  const table = {{}};
+  for (const t of manifest.tools) {{
+    if (t.transport) {{
+      const m = t.transport.method;
+      table[t.name] = {{
+        method: m,
+        path: t.transport.path,
+        argMapping: t.transport.arg_mapping || (m === 'GET' ? 'query' : 'body'),
+      }};
+    }}
+  }}
+  return table;
+}}
+
+async function fetchJson(url, init, timeoutMs) {{
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  init.signal = controller.signal;
   let res;
   try {{
-    res = await fetch(`${{BASE}}/invoke`, {{
-      method: 'POST',
-      headers: {{ 'content-type': 'application/json', ...authHeaders() }},
-      body: JSON.stringify({{ name, arguments: args ?? {{}} }}),
-      signal: controller.signal,
-    }});
+    res = await fetch(url, init);
   }} catch (err) {{
     clearTimeout(timer);
-    if (err.name === 'AbortError') {{
-      return {{ ok: false, error: `{product} control surface timed out after ${{timeoutMs}}ms.` }};
-    }}
+    if (err.name === 'AbortError') return {{ ok: false, error: `{product} control surface timed out after ${{timeoutMs}}ms.` }};
     return {{ ok: false, error: `{product} control surface unreachable at ${{BASE}} — is it running? (${{err.cause?.code || err.message}})` }};
   }}
   clearTimeout(timer);
   const text = await res.text();
-  try {{ return JSON.parse(text); }}
+  let parsed;
+  try {{ parsed = JSON.parse(text); }}
   catch {{ return res.ok ? {{ ok: true, raw: text }} : {{ ok: false, error: text || `HTTP ${{res.status}}` }}; }}
+  // A bespoke route that returns 4xx/5xx JSON without an ok flag: normalize
+  // so the agent always sees {{ok:false}} (the 401 remediation body survives).
+  if (!res.ok && (parsed == null || parsed.ok === undefined)) return {{ ok: false, ...(parsed || {{}}) }};
+  return parsed;
+}}
+
+export async function invoke(name, args, timeoutMs = 15000, routeTable = null) {{
+  const route = routeTable && routeTable[name];
+  const headers = {{ 'content-type': 'application/json', ...authHeaders() }};
+  if (route) {{
+    if (route.method === 'GET') {{
+      const qs = route.argMapping === 'query' && args && Object.keys(args).length
+        ? '?' + new URLSearchParams(Object.entries(args).map(([k, v]) => [k, String(v)])).toString()
+        : '';
+      return fetchJson(`${{BASE}}${{route.path}}${{qs}}`, {{ method: 'GET', headers }}, timeoutMs);
+    }}
+    const body = route.argMapping === 'none' ? undefined : JSON.stringify(args ?? {{}});
+    return fetchJson(`${{BASE}}${{route.path}}`, {{ method: 'POST', headers, body }}, timeoutMs);
+  }}
+  // greenfield default: the uniform dispatcher
+  return fetchJson(`${{BASE}}/invoke`, {{
+    method: 'POST', headers, body: JSON.stringify({{ name, arguments: args ?? {{}} }}),
+  }}, timeoutMs);
 }}
 
 export function listToolsFromManifest(manifest) {{
@@ -159,10 +196,11 @@ import {{ readFileSync }} from 'node:fs';
 import {{ fileURLToPath }} from 'node:url';
 import {{ dirname, join }} from 'node:path';
 
-import {{ invoke, listToolsFromManifest }} from './client.js';
+import {{ invoke, listToolsFromManifest, buildRouteTable }} from './client.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const manifest = JSON.parse(readFileSync(join(HERE, '..', 'manifest.json'), 'utf8'));
+const routeTable = buildRouteTable(manifest); // bespoke Gen-1 route bindings, if any
 
 const server = new Server(
   {{ name: {json.dumps(pkg['name'])}, version: {json.dumps(pkg['version'])} }},
@@ -178,7 +216,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {{
   if (!manifest.tools.some((t) => t.name === name)) {{
     return {{ isError: true, content: [{{ type: 'text', text: `unknown tool: ${{name}}` }}] }};
   }}
-  const result = await invoke(name, args);
+  const result = await invoke(name, args, 15000, routeTable);
   const text = JSON.stringify(result, null, 2);
   return result && result.ok === false
     ? {{ isError: true, content: [{{ type: 'text', text }}] }}
@@ -223,6 +261,7 @@ def emit_python_twin(manifest: dict, weave: dict) -> str:
     }
 
     entries = []
+    routes = {}
     for t in manifest["tools"]:
         band = t.get("band_floor", floor_defaults[t["tier"]])
         desc = json.dumps(t["description"], ensure_ascii=False)
@@ -231,7 +270,15 @@ def emit_python_twin(manifest: dict, weave: dict) -> str:
             f"{json.dumps(t['inputSchema'], ensure_ascii=False)}, "
             f"band={json.dumps(band)}, tier={json.dumps(t['tier'])})"
         )
+        tr = t.get("transport")
+        if tr:
+            routes[t["name"]] = {
+                "method": tr["method"],
+                "path": tr["path"],
+                "arg_mapping": tr.get("arg_mapping", "query" if tr["method"] == "GET" else "body"),
+            }
     entries_src = "\n".join(entries)
+    routes_src = json.dumps(routes, ensure_ascii=False, indent=4)
 
     if auth["kind"] == "install_token":
         token_src = f'''def _headers() -> dict[str, str]:
@@ -255,10 +302,11 @@ def emit_python_twin(manifest: dict, weave: dict) -> str:
     return f'''"""{_GENERATED_BANNER}
 
 {product} control capabilities for Windy Fly ({manifest["contract"]}).
-Every capability proxies POST /invoke on the platform's native control
-surface — the same single implementation the MCP packet wraps (ADR-060
-§1: one registry, two adapters). Band floors come from the manifest (or
-schema/band-ei-mapping.v1.json defaults); enforcement stays in the
+Every capability reaches the SAME live implementation the MCP packet wraps
+(ADR-060 §1: one registry, two adapters). Greenfield tools POST /invoke;
+Gen-1 tools with a transport binding call their bespoke REST route (see
+_ROUTES) so the hardened surface is never rewritten. Band floors come from
+the manifest (or the mapping-table defaults); enforcement stays in the
 Capability Plane, filtering starts at discovery.
 """
 
@@ -273,6 +321,9 @@ from windyfly.agent.capabilities.registry import CapabilityRegistry
 CONTRACT = {json.dumps(manifest["contract"])}
 TOOL_COUNT = {len(manifest["tools"])}
 
+# Bespoke Gen-1 route bindings (empty for greenfield /invoke surfaces).
+_ROUTES: dict[str, dict[str, str]] = {routes_src}
+
 
 def _base_url() -> str:
     return os.environ.get({json.dumps(base_env)}, {json.dumps(weave["http"]["base_default"])}).rstrip("/")
@@ -281,23 +332,36 @@ def _base_url() -> str:
 {token_src}
 
 
+def _normalize(r) -> dict[str, Any]:
+    try:
+        body = r.json()
+    except Exception:
+        return {{"ok": r.status_code < 400, "raw": r.text[:400]}}
+    if r.status_code >= 400 and (not isinstance(body, dict) or body.get("ok") is not False):
+        body = {{"ok": False, **(body if isinstance(body, dict) else {{"raw": body}})}}
+    return body
+
+
 def _invoke(name: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
     import httpx
 
+    args = arguments or {{}}
+    route = _ROUTES.get(name)
     try:
-        r = httpx.post(
-            f"{{_base_url()}}/invoke",
-            json={{"name": name, "arguments": arguments or {{}}}},
-            headers=_headers(),
-            timeout=15.0,
-        )
-        try:
-            body = r.json()
-        except Exception:
-            body = {{"ok": r.status_code < 400, "raw": r.text[:400]}}
-        if r.status_code >= 400 and body.get("ok") is not False:
-            body = {{"ok": False, **body}}
-        return body
+        with httpx.Client(timeout=15.0) as client:
+            if route is None:
+                r = client.post(
+                    f"{{_base_url()}}/invoke",
+                    json={{"name": name, "arguments": args}},
+                    headers=_headers(),
+                )
+            elif route["method"] == "GET":
+                params = args if route["arg_mapping"] == "query" else None
+                r = client.get(f"{{_base_url()}}{{route['path']}}", params=params, headers=_headers())
+            else:
+                json_body = None if route["arg_mapping"] == "none" else args
+                r = client.post(f"{{_base_url()}}{{route['path']}}", json=json_body, headers=_headers())
+        return _normalize(r)
     except httpx.ConnectError:
         return {{
             "ok": False,
