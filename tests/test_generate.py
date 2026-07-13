@@ -276,6 +276,50 @@ def test_cloud_generated_js_parses(mind_woven: Path):
         )
 
 
+FLY_WEAVE = {
+    "product": "windy-agent",
+    "class": "agent-host",
+    "server": "native",
+    "auth": {"kind": "ept", "token_env": "WINDY_EPT"},
+}
+
+
+def test_native_server_weaves_only_the_conformance_driver(tmp_path):
+    wv = tmp_path / "weave.json"
+    wv.write_text(json.dumps(FLY_WEAVE))
+    out = tmp_path / "out"
+    written = weave(
+        ROOT / "schema" / "fixtures" / "windy-agent" / "control.mcp.v1.json", wv, out
+    )
+    # No JS packet, no Python twin — the platform owns its native server.
+    assert not (out / "mcp-packet").exists()
+    assert not list(out.glob("*_twin.py"))
+    assert (out / "conformance_driver.py").exists()
+    assert (out / "manifest.json").exists()
+
+
+def test_native_conformance_driver_static_gate_runs(tmp_path):
+    wv = tmp_path / "weave.json"
+    wv.write_text(json.dumps(FLY_WEAVE))
+    out = tmp_path / "out"
+    weave(ROOT / "schema" / "fixtures" / "windy-agent" / "control.mcp.v1.json", wv, out)
+    r = subprocess.run(
+        ["python3", str(out / "conformance_driver.py")],
+        capture_output=True, text=True, cwd=out,
+    )
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "static OK" in r.stdout
+    assert "native server" in r.stdout  # live gate skipped, not HTTP-probed
+
+
+def test_native_weave_config_needs_no_http_or_package():
+    from loom.generate import validate_weave
+
+    assert validate_weave(FLY_WEAVE) == []
+    # a woven config still must carry http/auth/package
+    assert validate_weave({"product": "x", "class": "cloud"})
+
+
 def test_ops_contract_is_a_healing_surface(mind_woven: Path):
     # The Mind ops shim carries the baseline (Class C control surface), and
     # its implemented tools bind to real api.windymind.ai routes.

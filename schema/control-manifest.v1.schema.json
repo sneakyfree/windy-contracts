@@ -38,8 +38,9 @@
         "properties": {
           "name": {
             "type": "string",
-            "pattern": "^[a-z][a-z0-9_]*$",
-            "maxLength": 64
+            "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)*$",
+            "maxLength": 64,
+            "$comment": "Undotted (get_health) for greenfield/Gen-1 surfaces; dotted namespaces (health.recent) for agent-host capability ids projected from a registry. Both are valid MCP tool names."
           },
           "tier": {
             "type": "string",

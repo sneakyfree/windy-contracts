@@ -85,7 +85,25 @@ def validate_manifest(manifest: dict, *, path: str = "<memory>") -> Report:
     # control.* (Class D/A) and ops.* (Class C — the ops shim IS the cloud
     # control surface, ADR-060 §2). Companion surfaces (hands.*, telemetry.*)
     # ride alongside a healing surface that carries the baseline.
-    if manifest.get("contract", "").startswith(("control.", "ops.")):
+    is_healing = manifest.get("contract", "").startswith(("control.", "ops."))
+    baseline_map = manifest.get("baseline_mapping")
+    if is_healing and baseline_map is not None:
+        # Class A / native-server pattern: the live surface is a dynamic
+        # band-filtered registry, so baseline coverage is declared in
+        # baseline_mapping (role → real capability id + status), not by
+        # static tool names. Warn on missing roles and on gaps.
+        for knob in BASELINE_13:
+            role = "set_setting" if knob == "set_<setting>" else knob
+            entry = baseline_map.get(role)
+            if entry is None:
+                report.warnings.append(
+                    f"baseline: role '{role}' missing from baseline_mapping (ADR-060 §3.4)"
+                )
+            elif entry.get("status") == "gap":
+                report.warnings.append(
+                    f"baseline gap: '{role}' — {entry.get('note', 'not yet implemented')}"
+                )
+    elif is_healing:
         present = set(names)
         for knob in BASELINE_13:
             if knob == "set_<setting>":

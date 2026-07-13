@@ -4,10 +4,22 @@
   "title": "Loom weave config, v1",
   "$comment": "Per-platform knobs the generator needs beyond the manifest itself: where the native HTTP surface lives, how callers authenticate (ADR-060 §3.3 by class), and what the npm packet is called. Lives in each platform repo next to its manifest (contracts/weave.json).",
   "type": "object",
-  "required": ["product", "class", "http", "auth", "package"],
+  "required": ["product", "class"],
+  "allOf": [
+    {
+      "$comment": "Woven servers (Class D/C) need the HTTP base, auth, and package name. Native servers (Class A) implement their own server and need none of these.",
+      "if": { "not": { "properties": { "server": { "const": "native" } }, "required": ["server"] } },
+      "then": { "required": ["http", "auth", "package"] }
+    }
+  ],
   "properties": {
     "product": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
     "class": { "type": "string", "enum": ["desktop", "cloud", "agent-host"] },
+    "server": {
+      "type": "string",
+      "enum": ["woven", "native"],
+      "$comment": "Default 'woven': the Loom emits the MCP packet (Class D/C). 'native': the platform implements its MCP server itself over an in-process registry (Class A / agent-host — a woven proxy would HTTP-hop to itself). For 'native' the Loom validates the manifest and emits only the conformance driver; no JS packet, no Python twin."
+    },
     "http": {
       "type": "object",
       "required": ["base_default"],
