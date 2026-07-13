@@ -5,6 +5,22 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — cloud/code reconciliation (ADR-061)
+
+- **The cloud/code lane's MCP work RECONCILED** (windy-contracts #18). Verdict:
+  COMPLEMENTARY, not competing. They built PRODUCT + repair-own surfaces
+  (domains.mcp.v1/sites.mcp.v1: buy_domain, publish_site); ADR-060 built
+  OPS/healing. They cite ADR-060 in code + reserved the ops slot (DNA D9.8 =
+  §3.6 verbatim). Doctrine gains a 3rd archetype: product/agent-first.
+- ADR-061 doc + domains(10)/sites(12) fixtures (validate 0 err, same tier
+  vocab, money/publish always_confirm) + class enum alias 'cloud-service'→
+  'cloud' (H1). make check 67.
+- 🔴 TWO GRANT DECISIONS pending: H2 unify trust vocab (EI-matrix names vs
+  SANDBOX/USER/TRUSTED/OWNER — lean EI-matrix); H3 one umbrella doctrine vs
+  two docs (lean one umbrella, ADR-060).
+- Follow-up (gap-closing): cloud cells still need their ops.mcp.v1 healing
+  surface (D9.8 slot); windy-code MCP mostly unbuilt (Agent Bus over UDS).
+
 ## 2026-07-13 (night) — 🌟 GAP-CLOSING: Chat fleet-health aggregator SHIPPED (the fleet's biggest blind spot, closed)
 
 - **Platform taken: windy-chat** (gap-closing lane, per GAP-CLOSING.md
