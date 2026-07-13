@@ -1,0 +1,222 @@
+{
+  "auth": "bearer-ept-or-windy-jwt",
+  "class": "cloud-service",
+  "contract": "windy-cloud-sites.mcp.v1",
+  "endpoint": "/mcp",
+  "protocolVersion": "2025-06-18",
+  "tools": [
+    {
+      "description": "Saves a new version of a site (a checkpoint on the Undo timeline). files = { path: base64_content }. label = a HUMAN sentence like 'Added the beach photos' \u2014 grandma reads this list. Idempotent: the same files return the same version. Returns { version: {id, seq, note}, created, speak, next_actions }.",
+      "inputSchema": {
+        "properties": {
+          "files": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "label": {
+            "type": "string"
+          },
+          "site_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id",
+          "files",
+          "label"
+        ],
+        "type": "object"
+      },
+      "name": "add_or_edit_files",
+      "tier": "auto_allow"
+    },
+    {
+      "description": "Puts a purchased domain on a site. If this rides a buy_domain bundle, pass the SAME confirm_token plus the full bundle_actions \u2014 the human's one yes covers both. Otherwise agents get their own confirm question. Returns { hostname_id, state, speak, state_proof, next_actions }.",
+      "inputSchema": {
+        "properties": {
+          "bundle_actions": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "confirm_token": {
+            "type": "string"
+          },
+          "fqdn": {
+            "type": "string"
+          },
+          "site_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id",
+          "fqdn"
+        ],
+        "type": "object"
+      },
+      "name": "connect_domain_to_site",
+      "tier": "always_confirm"
+    },
+    {
+      "description": "The answer to \"start a new website called X\". Returns { site: {id, slug, state}, speak, state_proof, next_actions }. The site is a private draft until publish_site. SAFE TO RUN.",
+      "inputSchema": {
+        "properties": {
+          "created_via": {
+            "default": "agent",
+            "type": "string"
+          },
+          "display_name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "display_name"
+        ],
+        "type": "object"
+      },
+      "name": "create_site",
+      "tier": "auto_allow"
+    },
+    {
+      "description": "The full knob list of this service with trust tiers. Returns the capabilities manifest. SAFE TO RUN; also at /.well-known/windy-capabilities.json.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "get_capabilities",
+      "tier": "auto_allow"
+    },
+    {
+      "description": "The answer to \"what am I building?\" / \"read me my projects\". Returns { sites: [{id, slug, display_name, state, url, speak}], speak }.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "list_my_sites",
+      "tier": "auto_allow"
+    },
+    {
+      "description": "The Undo timeline for a site: every saved checkpoint with its human label. Returns { versions: [{id, seq, note, is_live, created_at}], speak }.",
+      "inputSchema": {
+        "properties": {
+          "site_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id"
+        ],
+        "type": "object"
+      },
+      "name": "list_versions",
+      "tier": "auto_allow"
+    },
+    {
+      "description": "Puts a version live. ALWAYS returns confirm_required first for agents: RELAY the question VERBATIM, then call again with the confirm_token after the human says yes (a spoken yes counts). Returns { deployment_id, state, speak, state_proof, next_actions } once confirmed. Publishing is explicit \u2014 drafts never leak.",
+      "inputSchema": {
+        "properties": {
+          "confirm_token": {
+            "type": "string"
+          },
+          "site_id": {
+            "type": "string"
+          },
+          "version_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id",
+          "version_id"
+        ],
+        "type": "object"
+      },
+      "name": "publish_site",
+      "tier": "always_confirm"
+    },
+    {
+      "description": "Deep repair: rewrites the edge pointer for a site's subdomain from database truth and purges the cache (KV is a cache; Postgres is truth). Safe to repeat. Gold+ standing required. Returns { hostname, rebuilt, speak }.",
+      "inputSchema": {
+        "properties": {
+          "site_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id"
+        ],
+        "type": "object"
+      },
+      "name": "rebuild_pointer",
+      "tier": "ask_first"
+    },
+    {
+      "description": "Deep repair: re-runs the publish pipeline for the CURRENT live version (safe to repeat \u2014 desired state). Use when a site shows stale or missing content. Gold+ Eternitas standing required. Returns { deployment_id, state, speak, next_actions }.",
+      "inputSchema": {
+        "properties": {
+          "site_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id"
+        ],
+        "type": "object"
+      },
+      "name": "republish_site",
+      "tier": "ask_first"
+    },
+    {
+      "description": "Windy Doctor for the sites service \u2014 use FIRST when anything seems wrong. Returns { checks: [{status, severity, finding, remediation}] } where remediation is a LITERAL next step. SAFE TO RUN.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "run_diagnostics",
+      "tier": "auto_allow"
+    },
+    {
+      "description": "The answer to \"is my site up?\". Returns { state, live_version_id, url, speak, state_proof, next_actions }. SAFE TO RUN \u2014 kept on an always-up path.",
+      "inputSchema": {
+        "properties": {
+          "site_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id"
+        ],
+        "type": "object"
+      },
+      "name": "site_status",
+      "tier": "auto_allow"
+    },
+    {
+      "description": "The giant Undo: puts an EARLIER version back live (rollback). Same confirm flow as publish_site. Returns the same shape.",
+      "inputSchema": {
+        "properties": {
+          "confirm_token": {
+            "type": "string"
+          },
+          "site_id": {
+            "type": "string"
+          },
+          "version_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "site_id",
+          "version_id"
+        ],
+        "type": "object"
+      },
+      "name": "undo_to_version",
+      "tier": "always_confirm"
+    }
+  ]
+}
