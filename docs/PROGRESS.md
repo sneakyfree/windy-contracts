@@ -5,6 +5,22 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — procession: Windy Chat + the multi-service pattern
+
+- **Third procession platform, most instructive** (windy-contracts #11 +
+  windy-chat #142). Chat = MULTI-SERVICE constellation (~13 Node services over
+  Synapse, nginx path-routed). Finding: per-service /health NOT externally
+  routed, no aggregator = biggest structural ops gap in the fleet.
+- **New doctrine pattern discovered + canonized:** `docs/MULTI-SERVICE-OPS.md`
+  — the fleet-health AGGREGATOR (one fan-out endpoint = get_health +
+  get_status + get_capabilities), the template for any multi-service Windy
+  platform. Chat's #1 build item.
+- Honest thin manifest: 1 tool (get_health → Synapse /_matrix/client/versions,
+  the core) + aggregator as $headline_gap. Validates, weaves, node-checks.
+  make check green (54, 8 fixtures). Retrofit map: Word=D, Talk=D, Mind=C,
+  Search=C, Mail=C, Chat=C, Fly=A.
+- **Next: Clone, Drops, Translate, admin remain in the procession.**
+
 ## 2026-07-13 (evening) — procession: Windy Mail (Class C, first band_floor)
 
 - **Second procession platform** (windy-contracts #10 + windy-mail #83). Mail
