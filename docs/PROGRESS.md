@@ -5,6 +5,25 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (later) — ADR-060 IS LAW; L1 part 1 shipped
+
+- **PR #1 merged on Grant's word — the doctrine is law.**
+- **L1 part 1 (this entry's PR):** canonical Talk contracts harvested from
+  Windy 0 @ `9360058` (Mac tree's hands.mcp.v1 had drifted — trap confirmed);
+  conformance suite extracted to `conformance/`; manifest schema v1 pinned
+  (`schema/control-manifest.v1.schema.json`) — **first-citizen law proven:
+  Talk rev.6 control + hands validate as-is, 0 errors**, and Talk's control
+  surface passes the full 13-knob baseline; band↔EI mapping table pinned
+  (`schema/band-ei-mapping.v1.json`); Loom validator live
+  (`uv run python -m loom.validate`, jsonschema-backed, ERROR vs doctrine-
+  WARNING split, `--strict` for v2-era); uv project + pytest; `make check`
+  green (16 tests).
+- **Next: L1 part 2 — the generator.** Emitters in order: (1) conformance
+  driver, (2) MCP packet on the windy-word-mcp 3-file skeleton, (3) Python
+  twin (windy-agent Capability registrations). Then L2.
+- Open Grant-gates: npm publish windy-word-mcp@1.11.0; book-launch rebuild
+  cherry-picks windy-pro #231.
+
 ## 2026-07-13 — P0 landed; ADR-060 drafted; lane infrastructure up
 
 - **P0 (Word token wall) CLOSED:** windy-pro #231 (per-install token on

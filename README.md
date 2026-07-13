@@ -8,12 +8,14 @@ enforces law:
 
 | What | Where | Status |
 |---|---|---|
-| **The Doctrine** — what every platform must ship | [`AGENT_CONTROL.md`](AGENT_CONTROL.md) | v1.0-draft, PR #1 |
-| Contract schema (the manifest every surface is generated from) | `schema/` | planned — Loom phase |
-| Shared conformance suite (extracted from windytalk) | `conformance/` | planned — Loom phase |
-| The generator ("the Loom": manifest → MCP packet + Python twin + tests) | `loom/` | planned |
-| `surfaces.json` discovery-registry schema | `schema/surfaces/` | planned |
-| Provenance / superseded drafts | `docs/archive/` | — |
+| **The Doctrine** — what every platform must ship | [`AGENT_CONTROL.md`](AGENT_CONTROL.md) | **LAW — v1.0, merged 2026-07-13** |
+| Contract schema (the manifest every surface is generated from) | `schema/control-manifest.v1.schema.json` | **v1 pinned** — Talk rev.6 validates as-is |
+| Band ↔ EI trust-mapping table (ADR-060 §3.5) | `schema/band-ei-mapping.v1.json` | **v1 pinned** |
+| Shared conformance suite (extracted from windytalk @ `9360058`) | `conformance/mcp-conformance.v1.json` | **extracted** — per-platform drivers come with L3 |
+| The Loom (`loom/`): validator | `uv run python -m loom.validate <manifest>` | **live** — `make check` gates it |
+| The Loom: generator (manifest → MCP packet + Python twin + HTTP skeleton) | `loom/` | next — L1 part 2 |
+| `surfaces.json` discovery-registry schema | `schema/surfaces/` | L2 |
+| Provenance / superseded drafts | `docs/archive/` | quarantined — banners name ADR-060 as canon |
 
 ## The one-sentence objective
 
