@@ -371,14 +371,19 @@ def test_mail_procession_validates_and_weaves_cloud(tmp_path):
 
 
 def test_chat_procession_multiservice(tmp_path):
-    # Chat is a multi-service constellation: honest thin surface (Synapse core
-    # only) with the fleet-health aggregator as the headline gap.
+    # Chat is a multi-service constellation. The fleet-health aggregator
+    # (windy-chat #143, 2026-07-13) closed the headline gap: one endpoint
+    # serves get_health + get_status + get_capabilities at once.
     from loom.validate import validate_manifest
     fx = ROOT / "schema" / "fixtures" / "windy-chat" / "ops.mcp.v1.json"
     m = json.loads(fx.read_text())
     assert validate_manifest(m).ok
-    assert len(m["tools"]) == 1  # only Synapse liveness is externally reachable
-    assert "$headline_gap" in m and "aggregator" in m["$headline_gap"]
+    assert len(m["tools"]) == 3  # the aggregator triad
+    names = {t["name"] for t in m["tools"]}
+    assert names == {"get_health", "get_status", "get_capabilities"}
+    # all three bind to the ONE aggregator route (MULTI-SERVICE-OPS pattern)
+    assert {t["transport"]["path"] for t in m["tools"]} == {"/api/v1/ops/health"}
+    assert "$headline_gap" in m and "CLOSED" in m["$headline_gap"]
     wv = tmp_path / "weave.json"
     wv.write_text(json.dumps(dict(MIND_WEAVE, product="windy-chat",
         http={"base_default": "https://chat.windychat.ai", "base_env": "WINDY_CHAT_API_URL"},
