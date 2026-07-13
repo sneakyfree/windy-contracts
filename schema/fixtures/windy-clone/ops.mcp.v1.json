@@ -1,0 +1,56 @@
+{
+  "contract": "ops.mcp.v1",
+  "doctrine": "ADR-060 v1.0",
+  "product": "windy-clone",
+  "class": "cloud",
+  "mcp_protocol": "2025-06-18",
+  "$comment": "Windy Clone ops surface — Class C, clean single-service replication (Mind/Search/Mail pattern, no wrinkle). Product API (orders, clones, previews, soul-file export — user-scoped, money-adjacent) stays OUT per §2. Reads bound via transport on https://windyclone.ai. get_capabilities maps to the provider catalog: a clone marketplace with ZERO providers is degraded-while-looking-alive — same honest-capability logic as Search's zero-bridges probe.",
+  "baseline_mapping": {
+    "get_health": { "status": "implemented", "maps_to": "GET /health" },
+    "get_status": { "status": "implemented", "maps_to": "GET /version", "note": "full deployment identity: version, commit sha, build timestamp, started_at, environment." },
+    "get_capabilities": { "status": "implemented", "maps_to": "GET /api/v1/providers", "note": "the provider catalog IS the capability probe — zero providers = degraded marketplace." },
+    "get_config": { "status": "gap" },
+    "get_logs": { "status": "gap", "note": "content-free only; never expose voice samples or soul-file content." },
+    "run_selftest": { "status": "gap", "note": "canary: resolve a provider + price a dummy order without purchasing." },
+    "reconnect": { "status": "unsupported", "note": "stateless service." },
+    "restart_app": { "status": "gap", "note": "out-of-band; ops plane outside the patient." },
+    "enter_safe_mode": { "status": "unsupported" },
+    "exit_safe_mode": { "status": "unsupported" },
+    "set_setting": { "status": "gap" },
+    "check_for_update": { "status": "gap", "note": "wire to the Steamroller fleet version manifest (L2)." },
+    "apply_update": { "status": "gap", "note": "SSH-free health-gated redeploy hook; §7." },
+    "reset_to_defaults": { "status": "unsupported", "note": "NEVER — holds users' clone orders and soul-file exports." }
+  },
+  "tools": [
+    {
+      "name": "get_health",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "The FIRST call when Windy Clone seems down. Liveness of the clone service: returns healthy + service + version if the API process is up.",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "transport": { "method": "GET", "path": "/health" }
+    },
+    {
+      "name": "get_status",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "Read Windy Clone's deployment identity — which build is serving right now, its commit, when it started, and which environment. Use this to confirm a deploy actually landed.",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "transport": { "method": "GET", "path": "/version" }
+    },
+    {
+      "name": "get_capabilities",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "List the clone providers Windy Clone can actually offer right now, with their pricing and features. A clone marketplace with zero providers looks alive but can't sell anything — this is the honest capability probe. Optionally filter by provider type.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "description": "Filter by provider type; omit or 'all' for everything." }
+        },
+        "additionalProperties": false
+      },
+      "transport": { "method": "GET", "path": "/api/v1/providers", "arg_mapping": "query" }
+    }
+  ]
+}
