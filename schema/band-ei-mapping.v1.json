@@ -1,0 +1,48 @@
+{
+  "$comment": "ADR-060 §3.5 — the single trust algebra: effective behavior = knob tier × caller band. This file pins the caller-band axis: how an Eternitas EI score (EI_CAPABILITY_MATRIX.v1, windy-cloud DNA v0.2.0) maps onto the fleet's band vocabulary (windy-agent Capability Plane: SANDBOX/USER/TRUSTED/OWNER), and what each band may do with each tier. Additive → v1.1 via PR; breaking → v2 and tell Grant.",
+  "mapping": "band-ei.v1",
+  "invariants": {
+    "$comment": "No band, no autonomy level, no combination overrides these.",
+    "always_confirm_floor": "Tools tiered always_confirm (money actions, apply_update, reset_to_defaults, run_shell) confirm on EVERY invocation for EVERY band — no session grants, no autonomy override.",
+    "no_self_escalation": "A standing grant is given by the USER via the confirmer; an agent can never grant itself one.",
+    "structured_denial": "A denial returns {ok:false, error:'denied'} — never silence.",
+    "discovery_filtering": "A caller below a tool's band_floor never sees the tool in tools/list — gating starts at discovery, not invocation."
+  },
+  "bands": [
+    {
+      "band": "SANDBOX",
+      "ei_range": "no EPT, or EPT with EI < 400",
+      "sees": "nothing by default (the stinky-bot treatment — ADR-060 §0); a surface MAY expose get_health alone to sandbox callers as a mercy knob",
+      "tiers": { "auto_allow": "denied", "ask_first": "denied", "always_confirm": "denied" }
+    },
+    {
+      "band": "USER",
+      "ei_range": "EPT in good standing, EI 400-699 — or local co-tenant on a Class D machine (human present, install token held)",
+      "sees": "read/diagnose knobs + reversible mutations",
+      "tiers": { "auto_allow": "execute", "ask_first": "confirm per call; user MAY grant session always-allow", "always_confirm": "confirm per call" }
+    },
+    {
+      "band": "TRUSTED",
+      "ei_range": "EI 700-899",
+      "sees": "USER + lifecycle knobs (restart_app, safe mode, reconnect chains) + update knobs",
+      "tiers": { "auto_allow": "execute", "ask_first": "execute under a standing user grant, else confirm", "always_confirm": "confirm per call" }
+    },
+    {
+      "band": "OWNER",
+      "ei_range": "EI >= 900, bound to the owning wi_ account — velocity multiplier x10 per EI_CAPABILITY_MATRIX.v1",
+      "sees": "everything the surface has",
+      "tiers": { "auto_allow": "execute", "ask_first": "execute (standing owner grant)", "always_confirm": "confirm per call — yes, even the owner" }
+    }
+  ],
+  "band_floor_defaults": {
+    "$comment": "Applied when a manifest tool omits band_floor.",
+    "auto_allow": "USER",
+    "ask_first": "USER",
+    "always_confirm": "TRUSTED"
+  },
+  "confirmation_transport": {
+    "desktop": "voice or tap via the product confirmer (windytalk hands/tiers.py pattern)",
+    "cloud": "CONFIRM_FLOW.v1 — single-use HMAC tokens, voice-yes first-class, composite bundles = one yes",
+    "agent-host": "conversational confirm in-channel (windy-agent pattern); /permit-style block-and-wait is a future addition, not assumed"
+  }
+}
