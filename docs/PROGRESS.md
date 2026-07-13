@@ -5,6 +5,47 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — GAP-CLOSING #4b: Mind ops-hook BUILT — the doctor is out of the patient (§7 urgent)
+
+- **windy-mind #61 merged: `ops-hook/`** — stdlib-only Python service,
+  its own systemd unit OUTSIDE the compose project (no shared container/
+  venv/dependency with mind-api), loopback :8901, internet only via a
+  Caddy `/hook/*` route. The host-side build for the mutating pair:
+  - `POST /hook/redeploy` (**apply_update, the §7-urgent one**): tag
+    last-known-good → rebuild from the deploy tree → up → alembic →
+    health-gate w/ optional expected_commit_sha ATTESTATION (served
+    /version must match) → automatic ROLLBACK to last-good on a failed
+    gate, re-gated; a rolled-back redeploy still reports passed=false.
+    v1 = rebuild-in-place; code pull to host stays rsync until Grant
+    grants a host git credential (documented).
+  - `POST /hook/config` (**set_setting**): ALLOWLISTED keys only
+    (provider *_API_KEYs + LOG_LEVEL — never hook token/DATABASE_URL/
+    REDIS_URL/MIND_HMAC_SECRET), env-injection-proof validation, atomic
+    .env write + .env.prev backup, recreate-not-restart (compose restart
+    skips env_file — the fleet trap), health-gate, auto-restore on fail.
+  - `POST /hook/restart` (**restart_app**): compose restart + gate.
+  - **Wall:** bearer token (constant-time, refuses to boot without one,
+    held in the unit's 0600 env — never the patient's) + **mechanical
+    always_confirm**: single-use 60s nonce from POST /hook/confirm, 428
+    w/ literal remediation without it + one-op 409 lock.
+- deploy/: systemd unit + Caddy snippet + install runbook. ⚠️ verify
+  WINDY_MIND_IMAGE_REF on-host before install (SUBSTRATE's image name is
+  ⓘ-inferred).
+- **Manifest stance: the three knobs stay honest GAPs w/ STAGED notes** —
+  not advertised until the unit is installed (no 404 knobs). Fixture
+  synced.
+- Proven: 12 tests, full-HTTP fidelity w/ injected runner/prober —
+  walls 401/428/409, nonce replay refusal, sha-mismatch rollback,
+  dead-gate rollback-and-regate, allowlist + injection guard, failed-
+  gate env restore. make check 69 green (post Talk-lane refresh).
+- **🔴 GRANT-GATED install:** verify image ref → token to unit env +
+  lockbox → systemd unit → Caddy /hook/* → smoke confirm+restart. Then
+  bind the 3 tools + re-weave.
+- **Mind is now FULLY buildable-side done** (reads #60 + hook #61); what
+  remains for Mind is deploys + the check_for_update wiring. **Next:
+  replicate the cloud-four across Search/Mail/Clone (mechanical), or
+  windy-admin's get_config/get_logs/run_selftest.**
+
 ## 2026-07-13 (night) — Talk lane DONE + canon fixtures refreshed
 
 - **windy-talk lane FINISHED its whole punch list** (windytalk PR #55, handoff

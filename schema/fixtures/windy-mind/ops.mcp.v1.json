@@ -13,12 +13,12 @@
     "get_logs": { "status": "implemented", "maps_to": "GET /ops/logs", "note": "content-free ring, fixed vocabulary — closed 2026-07-13." },
     "run_selftest": { "status": "implemented", "maps_to": "POST /ops/selftest", "note": "one real free-chain inference, 60s-cached — closed 2026-07-13." },
     "reconnect": { "status": "unsupported", "note": "stateless HTTP service — no standing connection to re-establish (providers are probed per-call)." },
-    "restart_app": { "status": "gap", "note": "out-of-band (compose restart); belongs with apply_update's out-of-patient hook." },
+    "restart_app": { "status": "gap", "note": "STAGED 2026-07-13: ops-hook POST /hook/restart built (ops-hook/, systemd unit OUTSIDE the compose project; bearer + single-use confirm nonce + health-gate). Live after the Grant-gated install (unit + Caddy /hook/* route + token) — then bind + re-weave." },
     "enter_safe_mode": { "status": "unsupported" },
     "exit_safe_mode": { "status": "unsupported" },
-    "set_setting": { "status": "gap", "note": "runtime provider-key / routing change WITHOUT redeploy; always_confirm + OWNER band. Next pass." },
+    "set_setting": { "status": "gap", "note": "STAGED 2026-07-13: ops-hook POST /hook/config built — ALLOWLISTED provider keys + LOG_LEVEL only, atomic .env edit w/ backup, recreate (not restart — compose restart skips env_file), health-gate, auto-restore on failed gate. always_confirm via single-use nonce. Live after the Grant-gated install." },
     "check_for_update": { "status": "gap", "note": "resolve /version against the Steamroller's /v1/fleet-versions (live on admin)." },
-    "apply_update": { "status": "gap", "note": "§7 URGENT: SSH-free health-gated redeploy, attested + last-known-good rollback; the hook lives OUTSIDE the api container it restarts. Next pass." },
+    "apply_update": { "status": "gap", "note": "STAGED 2026-07-13 (§7 urgent): ops-hook POST /hook/redeploy built — tag last-good → rebuild from tree → up → migrations → health-gate (+ optional expected_commit_sha attestation) → ROLLBACK to last-good on failed gate. v1 = rebuild-in-place (code pull to host stays rsync until a host git credential is granted). always_confirm via single-use nonce. Live after the Grant-gated install (unit + Caddy route + WINDY_MIND_IMAGE_REF verified on-host)." },
     "reset_to_defaults": { "status": "unsupported", "note": "config is env + DB-backed keys; a factory reset has no meaning for a stateless broker." }
   },
   "tools": [
