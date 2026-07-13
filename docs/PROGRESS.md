@@ -5,6 +5,28 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — GAP-CLOSING #5: Search healing reads SHIPPED (first template replication — fast + clean)
+
+- **windy-search #61 merged** — mechanical replication of the Mind
+  Class-C template (windy-mind #60), proving the "later platforms are
+  replication, not new mechanism" bet on the gap-closing side too.
+- `GET /ops/logs` (router per-source failures categorized —
+  source:quota_429/auth_or_billing/upstream_5xx/exception; bridge bodies
+  can echo query text, never stored) + `GET /ops/config` (per-source
+  {configured, fallback} booleans, redis/integrity/telemetry/render
+  wiring) + `POST /ops/selftest` (one real canary through the router's
+  fan-out/merge/dedup; counts/bridges/latency only; **300s verdict
+  cache — stricter than Mind's 60s because Brave/Google are METERED**).
+  All EPT-required (require_passport). Manifest 5→8 tools, gaps→
+  implemented; mutating gaps note the windy-mind ops-hook (#61) as the
+  port-ready pattern for this host.
+- Proven: 6 new tests (secret sweep, quota-cache single-call), full
+  suite 339 passed 0 regress; live 401-wall on real-auth boot; woven
+  packet static conformance byte-identical. make check 69 green.
+- **🔴 GRANT-GATED:** Search redeploy per its SUBSTRATE.
+- **Next:** Mail (get_logs MUST scrub mail — the privacy hard line's
+  sharpest platform), then Clone; then windy-admin's three reads.
+
 ## 2026-07-13 (night) — GAP-CLOSING #4b: Mind ops-hook BUILT — the doctor is out of the patient (§7 urgent)
 
 - **windy-mind #61 merged: `ops-hook/`** — stdlib-only Python service,
