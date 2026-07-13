@@ -5,6 +5,23 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — cloud discovery: /agent-surfaces (surfaces.json twin)
+
+- **windy-pro #234: GET /api/v1/identity/agent-surfaces** — the cloud-side
+  discovery primitive (ADR-060 §3.8), last unbuilt discovery piece. Hosted
+  agent can't read ~/.windy/surfaces.json → account-server answers "what
+  cloud ops surfaces does this human run?" in one authed call. New
+  services/agent-surfaces.ts registry (product_accounts product → ops MCP
+  descriptor {product,contract,mcp,class}; endpoints only, unknown omitted).
+  Read-only, reuses ecosystem-status query (operator-aware, ADR-050), NO
+  migration. 5 unit tests + 31 identity hardening green; tsc clean.
+- **⚠️ FLAGGED to Grant: pre-existing FAILURE on windy-pro main** —
+  `tests/api.test.ts › POST /api/v1/translate/text returns 200 without auth`
+  fails on clean main (NOT mine — confirmed by running on main w/o my
+  change). Violates "main must be green". Worth a look.
+- **Both discovery halves now exist: local surfaces.json (loom/register.py)
+  + cloud /agent-surfaces. Discovery layer COMPLETE.**
+
 ## 2026-07-13 (night) — Steamroller CLOSED-LOOP: fleet-version publisher
 
 - **windy-admin #25: GET /v1/fleet-versions publisher** — the SENDING half's
