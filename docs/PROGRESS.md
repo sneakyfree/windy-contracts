@@ -5,6 +5,34 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — GAP-CLOSING #3: Drops R2-404 SOLVED — false alarm, probe fixed (windy-registry #26)
+
+- **Investigation verdict (read-only first, per the menu): the R2 bucket
+  was NEVER broken.** windy-roster-0.1.0.zip downloads HTTP 200 from
+  drops.windydrops.com and its sha256 matches the registry's recorded
+  bundle_sha256 exactly; previews serve 200. Root cause: the /health/full
+  probe HEAD'd the public-domain ROOT, which an R2 public bucket 404s BY
+  DESIGN (no root object, no listings) — a permanent false alarm, and it
+  would have read 'ok' mid-outage had any object been named '/'.
+  Corroborating smell: r2_status was already excluded from the overall
+  verdict (the noise had been noticed and routed around, not diagnosed).
+- **Fix (windy-registry #26, merged): probe the true user path.**
+  Published bundle exists → HEAD that exact newest bundle_url (domain +
+  bucket + real object; 404 there = REAL degradation). Registry empty →
+  root-404 maps to 'ok (empty)' (R2's no-such-object answer proves the
+  domain is wired). r2 rejoins the overall verdict; 'http NNN' anywhere
+  (e.g. a 500ing JWKS) now degrades too, not just connection errors.
+- Manifest $comment updated (RESOLVED note + new semantics); fixture
+  synced here. 4 new tests pin the semantics; full registry suite 156
+  passed / 5 skipped (pre-existing skips).
+- **🔴 GRANT-GATED:** image rebuild + redeploy of windy-registry; after
+  deploy /health/full should read r2_bucket: 'ok'. (Un-flags the
+  standing '🔴 R2-404 finding' from the procession ledger entry —
+  nothing was ever down.)
+- **Next:** the recurring cloud four (Mind first — SSH-free redeploy is
+  the §7-urgent template) or windy-admin's get_config/get_logs/
+  run_selftest.
+
 ## 2026-07-13 (night) — GAP-CLOSING #2: Translate ops baseline SHIPPED (last MF1 hole closed)
 
 - **Platform taken: windy-translate** (gap-closing lane, impact order #2).
