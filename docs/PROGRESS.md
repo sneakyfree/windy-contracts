@@ -5,6 +5,27 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (evening) — L2: the Steamroller + discovery ("land on a box")
+
+- **The update-percolation half is built** (windy-contracts #8, ADR-060 §5 +
+  §3.8). `schema/fleet-version.v1.json` (central version manifest) +
+  `loom/register.py` (surfaces.json writer, atomic/0600/merge-by-product) +
+  `loom/discovery.py` (reference reader: PROBE BEFORE TRUST → reconcile
+  installed-vs-fleet → current/update-available/must-update, each with a
+  LITERAL remediation = doctor pattern for updates).
+- **Proven end-to-end:** agent lands on a box with Word (stale) + Talk (dead)
+  → "Word: npx windy-word-mcp@1.11.0 (security fix); Talk down (resurrect)."
+  The §0 promise mechanized. make check green (51 tests).
+- `docs/STEAMROLLER.md` documents the flow + deferrals.
+- **Deferred (out of this repo, each its own careful PR):** the admin
+  publisher of the fleet manifest (windy-admin); cloud discovery via the
+  account-server EPT query (identity-critical, windy-pro); per-surface
+  check_for_update wiring (per platform).
+- **Core infra is now COMPLETE: L1 (Loom, all 3 classes) + L2 (Steamroller +
+  discovery) both done.** What remains is the FLEET PROCESSION (replication:
+  Mail/Chat/Clone/Search/Drops/Translate...) + the deferred careful PRs +
+  cloud/code alignment. **Next: procession, or a deferred PR, or alignment.**
+
 ## 2026-07-13 (afternoon) — L3 Class A: Fly retrofit — THE CLASS TRIAD IS COMPLETE
 
 - **Loom learns Class A** (windy-contracts #7 + windy-agent #282). Fly's
