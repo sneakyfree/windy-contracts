@@ -5,6 +5,22 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — procession: Clone + Drops (live-production proof)
+
+- **Clone** (windy-contracts #12 + Windy-Clone #57): clean Class C, 3 reads on
+  windyclone.ai (health, version, providers=capability probe). No wrinkle.
+- **Drops** (windy-contracts #13 + windy-registry #25): dev-name/brand split —
+  brand=Windy Drops, service=windy-registry (matches /version + fleet key);
+  SDK/spec in separate windy-drops repo. 3 reads on api.windydrops.com
+  (health, version=MF1, health/full=deep probe Postgres+R2+JWKS).
+- **🔴 FIRST LIVE-PRODUCTION PROOF:** the woven Drops packet drove real
+  api.windydrops.com over stdio — get_capabilities returned db=ok, jwks
+  pro+eternitas ok, and CAUGHT `r2_bucket: 'http 404'` (a genuine production
+  degraded signal — flagged to Grant: R2 bundle bucket health probe failing).
+- make check green (54, 10 fixtures). Retrofit map: Word=D, Talk=D, Mind=C,
+  Search=C, Mail=C, Chat=C, Clone=C, Drops(windy-registry)=C, Fly=A.
+- **Remaining procession: Translate, admin.**
+
 ## 2026-07-13 (night) — procession: Windy Chat + the multi-service pattern
 
 - **Third procession platform, most instructive** (windy-contracts #11 +
