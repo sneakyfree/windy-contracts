@@ -5,6 +5,34 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — GAP-CLOSING #8: Admin healing reads SHIPPED — 🏁🏁 EVERY Class-C read gap in the fleet is CLOSED
+
+- **windy-admin #26 merged** — the last one. Every cloud platform
+  (Mind/Search/Mail/Chat/Clone/Drops/Translate/Admin) now has its full
+  complement of healing reads, code-side.
+- Admin's signature selftest: validate a content-free canary envelope →
+  ingest through the REAL event store → query it back on the same tail
+  the dashboard reads (platform=windy-admin, event_type=ops.selftest).
+  A pass means the pipeline every platform's telemetry rides is alive
+  end to end. Ops ring strictly META (never an ingested event's
+  payload/actor/member); get_config reports the emitter-token COUNT,
+  never values. Staff-gated (require_admin) like the dashboard.
+- Manifest 3→6 tools. Proven: 5 new tests (token-value sweep + canary-
+  visible-on-dashboard-tail), full suite 139 passed 0 regress, live
+  401-wall on real-auth boot. make check 69 green.
+- **🔴 GRANT-GATED:** admin redeploy per deploy-prod.
+- **THE REMAINING FLEET MAP (all read passes done):**
+  (1) 🔴 Grant deploys/installs for the 8 platforms shipped today;
+  (2) ops-hook ports (mutating pair) to Search/Mail/Clone/Chat/admin
+  hosts — windy-mind #61 is the donor; (3) check_for_update fleet-wide
+  (resolve /version against admin's live /v1/fleet-versions — pure
+  replication once the first one lands); (4) Chat per-service mutation
+  knobs (reconnect.<service> — the aggregator's read view now informs
+  them); (5) Word supervisor + resurrection + 8 baseline knobs
+  (Class D, ⚠️ main.js — highest care, LAST per the menu); (6) Mail
+  full canary send (needs canary mailbox); (7) Grant-gated: npm publish
+  windy-word-mcp@1.11.0, book-launch #231 cherry-pick.
+
 ## 2026-07-13 (night) — GAP-CLOSING #7: Clone healing reads SHIPPED — 🏁 the recurring-four READ passes are COMPLETE fleet-wide
 
 - **Windy-Clone #58 merged** — template replication #3. With this,
