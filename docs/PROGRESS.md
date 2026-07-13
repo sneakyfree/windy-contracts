@@ -5,6 +5,30 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (midday) — L3 Class C: Mind retrofit (Loom learns remote transport)
+
+- **Loom now speaks Class C** (windy-contracts #6 + windy-mind #59). cloud
+  weaves emit `src/http.js` — Streamable HTTP MCP at POST /mcp for HOSTED
+  agents, with **EPT passthrough** (remote caller's Authorization forwarded
+  verbatim; shim holds no ambient creds for remote callers). Emitters split:
+  `server.js` (shared builder w/ authOverride) + `index.js` (stdio/local) +
+  `http.js` (remote/cloud-only). Fixed http.js real-bound-port logging.
+- **Mind `ops.mcp.v1`** authored — 5 real read routes on api.windymind.ai;
+  named ops.* (inference API stays out per §2). baseline enforced on ops.*
+  too. Canonical in `windy-mind/contracts/`.
+- **Proven:** remote MCP client → /mcp → mock backend saw caller's EPT on
+  every call (incl. query-arg /v1/route). make check green (37 tests).
+- **Diagnostic:** Mind observable-but-not-healable — all 5 tools reads; no
+  remote config/logs/redeploy. §7 urgent (Actions billing-lock). Punch list
+  `docs/handoffs/MIND-LANE-2026-07-13.md`.
+- **The Loom has now met all 3 classes' transport shapes** (D stdio+token,
+  C remote+EPT; A = Fly, still pending but its native path already exists).
+  Per the "free re-weave" doctrine, later platforms of each class are
+  replication, not new mechanism.
+- **Next:** Fly (Class A retrofit — completes the class triad) OR L2
+  (Steamroller + account-server EPT discovery query) OR cloud/code alignment
+  when the sibling lane finishes.
+
 ## 2026-07-13 (morning) — L3 begins: Word retrofit (first Gen-1 weave)
 
 - **Loom gains Gen-1 `transport` bindings** (windy-contracts #5) — per-tool
