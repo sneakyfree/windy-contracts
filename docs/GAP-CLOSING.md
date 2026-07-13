@@ -45,7 +45,7 @@ shim behind the platform's TLS proxy at `/mcp`.
 
 | Platform | Repo | Gaps (see manifest `baseline_mapping`) | Notes |
 |---|---|---|---|
-| **windy-mind** | `~/windy-mind` | the recurring four | §7 urgent redeploy; handoff `docs/handoffs/MIND-LANE-2026-07-13.md`. The FIRST cloud template. |
+| **windy-mind** | `~/windy-mind` | ✅ **healing reads SHIPPED 2026-07-13** (windy-mind #60): get_logs (categorized, content-free) + get_config (secrets→booleans) + run_selftest (one real free-chain inference, 60s-cached), all EPT/JWT-gated; manifest 5→8 tools + baseline_mapping. 🔴 Grant-gated image rebuild. **REMAINING (pass 2, design-first): set_setting + apply_update — §7 urgent SSH-free redeploy, hook lives OUTSIDE the patient** | handoff `docs/handoffs/MIND-LANE-2026-07-13.md`. The FIRST cloud template — Search/Mail/Clone replicate this pass. |
 | **windy-search** | `~/windy-search` | the recurring four | `run_selftest` = canary search per source; cleanest leaf. |
 | **windy-mail** | `~/windy-mail` | the recurring four | `run_selftest` = canary send to loopback; `get_logs` MUST scrub mail. |
 | **windy-clone** | `~/Windy-Clone` | the recurring four | `run_selftest` = resolve+price a dummy order (no purchase). |

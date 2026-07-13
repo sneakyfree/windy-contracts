@@ -56,12 +56,17 @@ def test_phantom_binding_is_a_failure():
 
 def test_real_fixture_has_no_phantoms_against_its_own_routes():
     # Mind's manifest bound to the routes it actually declares → zero phantom.
+    # (Served set grew 2026-07-13: windy-mind #60 shipped the /ops/* healing
+    # reads — get_logs, get_config, run_selftest.)
     m = _fx("windy-mind", "ops.mcp.v1.json")
     served = [{"method": "GET", "path": p} for p in
-              ("/health", "/version", "/health/providers", "/v1/models", "/v1/route")]
+              ("/health", "/version", "/health/providers", "/v1/models", "/v1/route",
+               "/ops/logs", "/ops/config")]
+    served.append({"method": "POST", "path": "/ops/selftest"})
     r = coverage_report(m, served)
     assert r.ok and not r.phantom
-    assert set(r.covered) == {"/health", "/version", "/health/providers", "/v1/models", "/v1/route"}
+    assert set(r.covered) == {"/health", "/version", "/health/providers", "/v1/models",
+                              "/v1/route", "/ops/logs", "/ops/config", "/ops/selftest"}
 
 
 # ── uncovered candidates + product filtering ────────────────────────
