@@ -5,6 +5,25 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — 🏁 FLEET PROCESSION COMPLETE: Translate + Admin
+
+- **Translate** (windy-pro #233): internal Node support svc (loopback:8099).
+  3 reads (health w/ NLLB worker state; languages=capability; cache/stats).
+  Honest gaps: no /version (MF1) + no auth today.
+- **Admin** (windy-contracts #14 + windy-admin #24): super-admin dashboard.
+  3 reads (health w/ db; version; dashboard/fleet=live /version fan-out
+  @TRUSTED). /dashboard/fleet = natural Steamroller publisher home.
+- **🏁 EVERY FLEET PLATFORM NOW HAS A DOCTRINE-COMPLIANT AGENT-CONTROL
+  SURFACE.** 11 manifests, all validate, all placed in their repos:
+  Word=D, Talk=D | Mind/Search/Mail/Chat/Clone/Drops/Translate/Admin=C | Fly=A.
+- make check green (11 fixtures).
+- **Campaign status: L0 (law) + L1 (Loom, 3 classes) + L2 (Steamroller) +
+  L3 (all reference retrofits) + PROCESSION (whole fleet) = DONE.**
+  What remains = the deferred careful PRs (admin fleet-publisher endpoint;
+  account-server EPT discovery query; Fly mcp.* client; Fly boot-wiring;
+  per-platform gap-closing incl. the multi-service aggregators) + cloud/code
+  alignment when the sibling lane finishes + Grant-gated npm/deploy/publish.
+
 ## 2026-07-13 (night) — procession: Clone + Drops (live-production proof)
 
 - **Clone** (windy-contracts #12 + Windy-Clone #57): clean Class C, 3 reads on
