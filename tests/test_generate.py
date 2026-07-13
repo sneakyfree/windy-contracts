@@ -144,6 +144,81 @@ def test_refuses_to_weave_an_invalid_manifest(tmp_path):
         weave(bad, wv, tmp_path / "out")
 
 
+WORD_WEAVE = {
+    "product": "windy-word",
+    "class": "desktop",
+    "http": {"base_default": "http://127.0.0.1:18765", "base_env": "WINDY_WORD_URL"},
+    "auth": {
+        "kind": "install_token",
+        "token_path_default": "~/.windy-word/control.token",
+        "token_env": "WINDY_WORD_CONTROL_TOKEN",
+        "token_path_env": "WINDY_WORD_CONTROL_TOKEN_PATH",
+    },
+    "package": {"name": "windy-word-mcp", "version": "0.0.0-loom-test"},
+}
+
+
+def _word_manifest() -> dict:
+    return json.loads(
+        (ROOT / "schema" / "fixtures" / "windy-word" / "control.mcp.v1.json").read_text()
+    )
+
+
+@pytest.fixture(scope="module")
+def word_woven(tmp_path_factory) -> Path:
+    out = tmp_path_factory.mktemp("word")
+    wv = out / "weave.json"
+    wv.write_text(json.dumps(WORD_WEAVE))
+    weave(ROOT / "schema" / "fixtures" / "windy-word" / "control.mcp.v1.json", wv, out)
+    return out
+
+
+def test_word_manifest_is_gen1_bound_and_valid():
+    from loom.validate import validate_manifest
+
+    m = _word_manifest()
+    r = validate_manifest(m)
+    assert r.ok, r.errors
+    # Every Word tool is a real route (Gen-1 escape hatch) — none falls back
+    # to the phantom /invoke Word doesn't serve.
+    assert all("transport" in t for t in m["tools"]), "a Word tool lacks its route binding"
+
+
+def test_word_client_builds_a_route_table(word_woven: Path):
+    client = (word_woven / "mcp-packet" / "src" / "client.js").read_text()
+    assert "buildRouteTable" in client
+    # spot-check the three routing modes are all reachable in the generated code
+    assert "route.method === 'GET'" in client
+    assert "route.argMapping === 'none'" in client
+    assert "new URLSearchParams" in client
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node not on PATH")
+def test_word_generated_js_parses(word_woven: Path):
+    for rel in ("src/client.js", "src/index.js"):
+        subprocess.run(
+            ["node", "--check", str(word_woven / "mcp-packet" / rel)],
+            check=True, capture_output=True,
+        )
+
+
+def test_word_twin_carries_the_route_table(word_woven: Path):
+    twin = (word_woven / "windy_word_twin.py").read_text()
+    py_compile.compile(str(word_woven / "windy_word_twin.py"), doraise=True)
+    assert '"/sound-effects/master-volume"' in twin
+    assert '"/app/restart"' in twin
+    assert '"arg_mapping": "none"' in twin  # restart/check-update carry it
+
+
+def test_word_baseline_gaps_are_not_advertised():
+    # The 8 gap knobs must NOT appear as callable tools — a packet that offers
+    # apply_update and 404s mid-incident is worse than one that omits it.
+    names = {t["name"] for t in _word_manifest()["tools"]}
+    for gap in ("get_logs", "run_selftest", "apply_update", "reset_to_defaults",
+                "enter_safe_mode", "exit_safe_mode", "reconnect", "get_capabilities"):
+        assert gap not in names, f"{gap} is a documented gap, must not be advertised"
+
+
 def test_ept_auth_variant_emits_ept_headers():
     cloud_weave = dict(
         TALK_WEAVE,
