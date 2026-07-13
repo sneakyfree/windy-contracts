@@ -4,7 +4,23 @@
   "product": "windy-mind",
   "class": "cloud",
   "mcp_protocol": "2025-06-18",
-  "$comment": "Windy Mind OPS surface — FIRST Class-C retrofit (the cloud template). Deliberately named ops.mcp.v1, NOT control: the inference API (/v1/chat) is the product and stays out of this contract (ADR-060 §2 Class C: the ops shim is separate from the product API). Every tool here is a real, live route on https://api.windymind.ai, bound via transport (Gen-1 escape hatch). Reads are unauthenticated today (content-free health/identity endpoints); mutations do not exist yet — Mind can be OBSERVED but not HEALED remotely, which is the §7 'urgent' finding. The gaps (get_logs, runtime config get/set, redeploy-as-apply_update, run_selftest) live in docs/handoffs/MIND-LANE punch list, not here: a knob that 404s mid-incident is worse than an honest absence.",
+  "$comment": "Windy Mind OPS surface — FIRST Class-C retrofit (the cloud template). Deliberately named ops.mcp.v1, NOT control: the inference API (/v1/chat) is the product and stays out of this contract (ADR-060 §2 Class C: the ops shim is separate from the product API). Every tool here is a real route on https://api.windymind.ai, bound via transport (Gen-1 escape hatch). Rev 2026-07-13 (gap-closing pass 1): get_logs + get_config + run_selftest SHIPPED — the /ops/* trio requires an authenticated caller (EPT or Pro JWT; the woven shim forwards the remote caller's own EPT, Mind's wall is the single authority). get_logs is content-free BY CONSTRUCTION (fixed event vocabulary; provider errors categorized, never stored raw — error bodies can embed prompts). run_selftest makes ONE real minimal inference through the broker's free-biased chain (paid fallbacks disallowed) and caches its verdict 60s so polling can't burn quota; its payload uses `passed`, never top-level `ok` (reserved by the invoke envelope). STILL-OPEN gaps (docs/handoffs/MIND-LANE punch list): set_setting (runtime provider-key change without redeploy) and apply_update (SSH-free health-gated redeploy, ops plane OUTSIDE the patient) — the mutating pair, next pass. DEPLOY STATUS: merged; live after the Grant-gated image rebuild — probe before trusting mid-incident.",
+  "baseline_mapping": {
+    "get_health": { "status": "implemented", "maps_to": "GET /health" },
+    "get_status": { "status": "implemented", "maps_to": "GET /version" },
+    "get_capabilities": { "status": "implemented", "maps_to": "GET /health/providers" },
+    "get_config": { "status": "implemented", "maps_to": "GET /ops/config", "note": "effective runtime config, secrets redacted to booleans — closed 2026-07-13." },
+    "get_logs": { "status": "implemented", "maps_to": "GET /ops/logs", "note": "content-free ring, fixed vocabulary — closed 2026-07-13." },
+    "run_selftest": { "status": "implemented", "maps_to": "POST /ops/selftest", "note": "one real free-chain inference, 60s-cached — closed 2026-07-13." },
+    "reconnect": { "status": "unsupported", "note": "stateless HTTP service — no standing connection to re-establish (providers are probed per-call)." },
+    "restart_app": { "status": "gap", "note": "out-of-band (compose restart); belongs with apply_update's out-of-patient hook." },
+    "enter_safe_mode": { "status": "unsupported" },
+    "exit_safe_mode": { "status": "unsupported" },
+    "set_setting": { "status": "gap", "note": "runtime provider-key / routing change WITHOUT redeploy; always_confirm + OWNER band. Next pass." },
+    "check_for_update": { "status": "gap", "note": "resolve /version against the Steamroller's /v1/fleet-versions (live on admin)." },
+    "apply_update": { "status": "gap", "note": "§7 URGENT: SSH-free health-gated redeploy, attested + last-known-good rollback; the hook lives OUTSIDE the api container it restarts. Next pass." },
+    "reset_to_defaults": { "status": "unsupported", "note": "config is env + DB-backed keys; a factory reset has no meaning for a stateless broker." }
+  },
   "tools": [
     {
       "name": "get_health",
@@ -58,6 +74,63 @@
         "additionalProperties": false
       },
       "transport": { "method": "GET", "path": "/v1/route", "arg_mapping": "query" }
+    },
+    {
+      "name": "get_logs",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "Read Windy Mind's recent operational events — server starts, per-provider failures by category (quota exhausted, bad key, timeout, empty completion), and self-test results. Content-free by construction: the log can only ever hold fixed event names and category codes, never a prompt, completion, or raw provider error. Requires an authenticated caller (your passport or account token).",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "count": { "type": "number" },
+          "entries": { "type": "array", "description": "[{ts, level, event, code?}] — fixed vocabulary only" }
+        }
+      },
+      "transport": { "method": "GET", "path": "/ops/logs" }
+    },
+    {
+      "name": "get_config",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "Read Windy Mind's effective runtime configuration with every secret redacted to a boolean: which provider adapters actually hold keys, whether the database / Redis / telemetry legs are wired, and which environment this deployment thinks it is. Use this when 'the buffet shrank' — it shows the gap between what's advertised and what's actually configured. Requires an authenticated caller.",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "environment": { "type": "string" },
+          "providers": { "type": "object", "description": "{provider: configured bool} — never key material, not even fingerprints" },
+          "providers_configured": { "type": "number" },
+          "database_configured": { "type": "boolean" },
+          "redis_configured": { "type": "boolean" },
+          "telemetry_configured": { "type": "boolean" }
+        }
+      },
+      "transport": { "method": "GET", "path": "/ops/config" }
+    },
+    {
+      "name": "run_selftest",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "Actively exercise Windy Mind's real core path: one minimal chat call routed through the broker exactly the way a user's request would be, but riding only the free-biased chain (paid fallbacks disallowed — the canary never spends money). Reports pass/fail per stage (config, then inference) with which model and provider answered and how fast — never the reply text. The verdict is cached for 60 seconds, so polling it cannot burn provider quota. Requires an authenticated caller.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "model": { "type": "string", "description": "Optional model id to canary; default = the broker's free-biased default chain." }
+        },
+        "additionalProperties": false
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "passed": { "type": "boolean", "description": "true only when every stage passed ('passed', not 'ok' — top-level ok is reserved for the invoke envelope)" },
+          "stages": { "type": "array", "description": "[{name: config|inference, ok, detail}] — detail is model/provider/latency, never completion text" },
+          "duration_ms": { "type": "number" },
+          "cached": { "type": "boolean" }
+        }
+      },
+      "transport": { "method": "POST", "path": "/ops/selftest" }
     }
   ]
 }

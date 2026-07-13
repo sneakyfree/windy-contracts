@@ -5,6 +5,44 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — GAP-CLOSING #4a: Mind healing reads SHIPPED (observable → half-healable)
+
+- **Platform taken: windy-mind** (the recurring cloud four, Mind first —
+  the Class-C template others copy). windy-mind #60 merged; fixture +
+  coverage test synced here. 3 of 5 MIND-LANE punch-list gaps closed.
+- **Shipped:** `GET /ops/logs` (content-free ring; broker error paths
+  feed it CATEGORIZED — provider:quota_429/auth/timeout/
+  empty_completion — raw provider bodies can embed prompts, never
+  stored); `GET /ops/config` (every secret redacted to a boolean:
+  per-provider key map via broker.status(), db/redis/telemetry legs,
+  environment); `POST /ops/selftest` (ONE real minimal inference through
+  the broker with paid_fallback_allowed=False — the canary rides the
+  free-biased chain, never spends money; per-stage verdict `passed`;
+  detail = model/provider/latency, never completion text; **60s verdict
+  cache so polling can't burn quota**). All three require EPT/Pro-JWT
+  (require_user) per the handoff guardrail. Manifest gains
+  baseline_mapping (fleet convention), 5→8 tools;
+  reconnect/safe-mode/reset marked honestly `unsupported` (stateless
+  broker).
+- **Proven:** 7 new route tests, full Mind suite 403 passed, 0 regress;
+  LIVE 401-wall proof on the real-auth boot (/ops/* 401 anonymous,
+  /health public); LIVE woven-packet E2E (real MCP client → packet →
+  booted real app): 8 tools, redacted config, ring carrying the real
+  lifespan server_start, selftest passed + cache hit, completion text
+  provably absent; conformance static byte-identical; make check 67.
+- **Coverage-sentinel note:** the L5 pinned-route test
+  (test_real_fixture_has_no_phantoms…) updated to Mind's grown served
+  set — the sentinel correctly caught the manifest/served-set delta.
+- **🔴 GRANT-GATED:** mind-api image rebuild to make /ops/* live.
+- **Next (Mind pass 2, needs design before code): the mutating pair —**
+  `set_setting` (runtime provider-key change w/o redeploy;
+  always_confirm + OWNER band) and **`apply_update` (§7 URGENT:
+  SSH-free health-gated redeploy; the hook must live OUTSIDE the api
+  container it restarts — candidate homes: the Cloud kernel's ops
+  plane, admin, or a host-level supervisor unit shipped in-repo).**
+  Or continue the recurring four on Search/Mail/Clone (pure
+  replication of this pass).
+
 ## 2026-07-13 (night) — GAP-CLOSING #3: Drops R2-404 SOLVED — false alarm, probe fixed (windy-registry #26)
 
 - **Investigation verdict (read-only first, per the menu): the R2 bucket
