@@ -1,3 +1,14 @@
+> # ⛔ SUPERSEDED — NOT LAW. DO NOT BUILD FROM THIS FILE.
+> This is the Windy 0 handoff draft, preserved verbatim as provenance only.
+> **The canonical source of truth is [`/AGENT_CONTROL.md`](../../AGENT_CONTROL.md) (ADR-060)** —
+> roughly 30% of what follows was overruled there (five-product scope → three
+> platform classes; per-product DNS registries → one account-server EPT query;
+> no Loom / no Steamroller → both added; cloud transport absent → remote MCP
+> + EPT). If this file and ADR-060 disagree, ADR-060 wins, always.
+> Kept because: overruled ideas that get erased get re-litigated, and the
+> per-product punch lists here carry file-level detail the doctrine
+> compressed — mine them during each platform's L3/L4 retrofit slot.
+
 # AGENT_CONTROL.md — The Windy Ecosystem Agent-Control Doctrine
 
 > **DRAFT v0.1 — 2026-07-13.** Authored by the Windy Talk Fable instance (Windy 0)
