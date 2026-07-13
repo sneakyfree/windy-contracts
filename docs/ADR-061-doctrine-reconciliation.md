@@ -1,10 +1,12 @@
 # ADR-061 — Reconciling the two doctrine tracks
 
-> **2026-07-13. Status: PROPOSAL (Grant decisions flagged inline).** Authored
-> by the doctrine lane after the cloud/code lane finished its independent MCP
-> work. Verdict: the two tracks are **complementary layers, not competing
-> standards** — but three harmonizations are needed, two of which are Grant's
-> call.
+> **2026-07-13. Status: ACCEPTED.** Verdict: the two tracks are **complementary
+> layers, not competing standards.** All three harmonizations decided:
+> **H1** (class alias) done; **H2** — Grant concurred: unify trust vocabulary
+> on the **EI_CAPABILITY_MATRIX names** (Platinum/Gold/Standard/Watch/Untrusted),
+> ADR-060's SANDBOX/USER/TRUSTED/OWNER become deprecated aliases
+> (`schema/band-ei-mapping.v1.json`); **H3** — Grant concurred: **one umbrella**
+> — ADR-060 absorbs the Fable-7.5 product law as `AGENT_CONTROL.md §1.1`.
 
 ## What happened
 

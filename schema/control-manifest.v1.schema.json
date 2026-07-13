@@ -62,8 +62,8 @@
           },
           "band_floor": {
             "type": "string",
-            "enum": ["SANDBOX", "USER", "TRUSTED", "OWNER"],
-            "$comment": "Minimum caller band that DISCOVERS this tool (ADR-060 §3.5 band-filtered discovery). Default when absent: USER for auto_allow reads, TRUSTED for mutations — pinned in schema/band-ei-mapping.v1.json."
+            "enum": ["Platinum", "Gold", "Standard", "Watch", "Untrusted", "OWNER", "TRUSTED", "USER", "SANDBOX"],
+            "$comment": "Minimum caller band that DISCOVERS this tool (band-filtered discovery). CANONICAL vocabulary (ADR-061 H2): the EI_CAPABILITY_MATRIX bands Platinum/Gold/Standard/Watch/Untrusted. The four ADR-060 names (OWNER/TRUSTED/USER/SANDBOX) are DEPRECATED aliases, still accepted for transition (map per schema/band-ei-mapping.v1.json adr060_alias_map). Default when absent: Standard for reads, Gold for mutations."
           },
           "transport": {
             "type": "object",

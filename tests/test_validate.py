@@ -147,12 +147,21 @@ def test_band_ei_mapping_parses_and_covers_all_bands():
     mapping = json.loads(
         (Path(__file__).resolve().parent.parent / "schema" / "band-ei-mapping.v1.json").read_text()
     )
+    # ADR-061 H2: canonical vocabulary is the EI_CAPABILITY_MATRIX bands.
     bands = [b["band"] for b in mapping["bands"]]
-    assert bands == ["SANDBOX", "USER", "TRUSTED", "OWNER"]
+    assert bands == ["Platinum", "Gold", "Standard", "Watch", "Untrusted"]
+    # each canonical band carries its deprecated ADR-060 alias reference
+    assert {b["band"]: b["adr060_alias"] for b in mapping["bands"]}["Platinum"] == "OWNER"
+    aliases = {k: v for k, v in mapping["adr060_alias_map"].items() if not k.startswith("$")}
+    assert aliases == {
+        "OWNER": "Platinum", "TRUSTED": "Gold", "USER": "Standard", "SANDBOX": "Untrusted",
+    }
     floor_keys = {k for k in mapping["band_floor_defaults"] if not k.startswith("$")}
     assert floor_keys == {"auto_allow", "ask_first", "always_confirm"}
     for b in mapping["bands"]:
         assert set(b["tiers"]) == {"auto_allow", "ask_first", "always_confirm"}
+    # the operator capability class (ops surface, role-EPT gated, not EI) exists
+    assert "operator" in mapping["capability_classes"]
 
 
 def test_conformance_suite_parses():
