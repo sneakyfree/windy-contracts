@@ -125,9 +125,17 @@ def test_control_surface_missing_baseline_warns_per_knob():
     assert len(missing) == len(BASELINE_13) - 1
 
 
-def test_ops_surface_skips_baseline():
+def test_ops_surface_gets_baseline_too():
+    # Class C: the ops shim IS the cloud control surface (ADR-060 §2).
     m = _minimal()
     m["contract"] = "ops.mcp.v1"
+    r = validate_manifest(m)
+    assert any(w.startswith("baseline:") for w in r.warnings)
+
+
+def test_companion_surfaces_skip_baseline():
+    m = _minimal()
+    m["contract"] = "hands.mcp.v1"
     r = validate_manifest(m)
     assert not any(w.startswith("baseline:") for w in r.warnings)
 

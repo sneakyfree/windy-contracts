@@ -11,4 +11,4 @@ test:
 # First citizens must stay valid forever; --strict is NOT used here because
 # rev.6 predates the doctrine headers (that ramp closes at manifest v2).
 validate:
-	uv run python -m loom.validate schema/fixtures/windytalk/control.mcp.v1.json schema/fixtures/windytalk/hands.mcp.v1.json schema/fixtures/windy-word/control.mcp.v1.json
+	uv run python -m loom.validate schema/fixtures/windytalk/control.mcp.v1.json schema/fixtures/windytalk/hands.mcp.v1.json schema/fixtures/windy-word/control.mcp.v1.json schema/fixtures/windy-mind/ops.mcp.v1.json
