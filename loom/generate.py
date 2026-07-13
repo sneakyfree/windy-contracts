@@ -156,9 +156,12 @@ async function fetchJson(url, init, timeoutMs) {{
   return parsed;
 }}
 
-export async function invoke(name, args, timeoutMs = 15000, routeTable = null) {{
+// extraHeaders (e.g. a remote caller's own EPT, passed through by the
+// streamable-http host) WINS over this process's ambient credentials —
+// identity flows through the shim; the platform's wall stays authoritative.
+export async function invoke(name, args, timeoutMs = 15000, routeTable = null, extraHeaders = null) {{
   const route = routeTable && routeTable[name];
-  const headers = {{ 'content-type': 'application/json', ...authHeaders() }};
+  const headers = {{ 'content-type': 'application/json', ...authHeaders(), ...(extraHeaders || {{}}) }};
   if (route) {{
     if (route.method === 'GET') {{
       const qs = route.argMapping === 'query' && args && Object.keys(args).length
@@ -184,13 +187,15 @@ export function listToolsFromManifest(manifest) {{
 }}
 """
 
-    index_js = f"""// {_GENERATED_BANNER}
-// MCP server for {product} ({manifest['contract']}). Low-level SDK server:
+    server_js = f"""// {_GENERATED_BANNER}
+// Shared MCP server builder for {product} ({manifest['contract']}):
 // tools/list serves the embedded manifest VERBATIM (schema parity with the
 // native transport is structural, not re-implemented), tools/call proxies
-// POST /invoke. isError mirrors the surface's {{ok:false}} envelope.
+// the native routes. isError mirrors the surface's {{ok:false}} envelope.
+// authOverride: per-request credentials from a remote caller (the
+// streamable-http host passes the caller's EPT through); null → this
+// process's own ambient credentials.
 import {{ Server }} from '@modelcontextprotocol/sdk/server/index.js';
-import {{ StdioServerTransport }} from '@modelcontextprotocol/sdk/server/stdio.js';
 import {{ CallToolRequestSchema, ListToolsRequestSchema }} from '@modelcontextprotocol/sdk/types.js';
 import {{ readFileSync }} from 'node:fs';
 import {{ fileURLToPath }} from 'node:url';
@@ -199,32 +204,43 @@ import {{ dirname, join }} from 'node:path';
 import {{ invoke, listToolsFromManifest, buildRouteTable }} from './client.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const manifest = JSON.parse(readFileSync(join(HERE, '..', 'manifest.json'), 'utf8'));
+export const manifest = JSON.parse(readFileSync(join(HERE, '..', 'manifest.json'), 'utf8'));
 const routeTable = buildRouteTable(manifest); // bespoke Gen-1 route bindings, if any
 
-const server = new Server(
-  {{ name: {json.dumps(pkg['name'])}, version: {json.dumps(pkg['version'])} }},
-  {{ capabilities: {{ tools: {{}} }} }},
-);
+export function buildServer(authOverride = null) {{
+  const server = new Server(
+    {{ name: {json.dumps(pkg['name'])}, version: {json.dumps(pkg['version'])} }},
+    {{ capabilities: {{ tools: {{}} }} }},
+  );
 
-server.setRequestHandler(ListToolsRequestSchema, async () => ({{
-  tools: listToolsFromManifest(manifest),
-}}));
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({{
+    tools: listToolsFromManifest(manifest),
+  }}));
 
-server.setRequestHandler(CallToolRequestSchema, async (req) => {{
-  const {{ name, arguments: args }} = req.params;
-  if (!manifest.tools.some((t) => t.name === name)) {{
-    return {{ isError: true, content: [{{ type: 'text', text: `unknown tool: ${{name}}` }}] }};
-  }}
-  const result = await invoke(name, args, 15000, routeTable);
-  const text = JSON.stringify(result, null, 2);
-  return result && result.ok === false
-    ? {{ isError: true, content: [{{ type: 'text', text }}] }}
-    : {{ content: [{{ type: 'text', text }}] }};
-}});
+  server.setRequestHandler(CallToolRequestSchema, async (req) => {{
+    const {{ name, arguments: args }} = req.params;
+    if (!manifest.tools.some((t) => t.name === name)) {{
+      return {{ isError: true, content: [{{ type: 'text', text: `unknown tool: ${{name}}` }}] }};
+    }}
+    const result = await invoke(name, args, 15000, routeTable, authOverride);
+    const text = JSON.stringify(result, null, 2);
+    return result && result.ok === false
+      ? {{ isError: true, content: [{{ type: 'text', text }}] }}
+      : {{ content: [{{ type: 'text', text }}] }};
+  }});
+
+  return server;
+}}
+"""
+
+    index_js = f"""// {_GENERATED_BANNER}
+// stdio entrypoint — how a LOCAL agent (Claude Code, Claude Desktop, a
+// co-tenant Fly) attaches. Uses this process's ambient credentials.
+import {{ StdioServerTransport }} from '@modelcontextprotocol/sdk/server/stdio.js';
+import {{ buildServer, manifest }} from './server.js';
 
 async function main() {{
-  await server.connect(new StdioServerTransport());
+  await buildServer().connect(new StdioServerTransport());
   console.error(`[{pkg['name']} {pkg['version']}] stdio ready — {manifest['contract']}, ${{manifest.tools.length}} tools`);
 }}
 
@@ -236,13 +252,70 @@ main().catch((e) => {{ console.error('[{pkg['name']}] fatal:', e); process.exit(
 import '../src/index.js';
 """
 
-    return {
+    files = {
         "package.json": package_json,
         "manifest.json": manifest_json,
         "src/client.js": client_js,
+        "src/server.js": server_js,
         "src/index.js": index_js,
         "bin/cli.js": cli_js,
     }
+
+    if weave["class"] == "cloud":
+        files["src/http.js"] = f"""// {_GENERATED_BANNER}
+// Remote entrypoint (ADR-060 §2 Class C): Streamable HTTP MCP at /mcp so a
+// HOSTED agent can reach this surface over the internet. STATELESS: one
+// server+transport pair per request. AUTH PASSTHROUGH: the caller's own
+// Authorization header (their EPT) is forwarded verbatim on every backend
+// call — this shim holds no ambient credentials for remote callers; the
+// platform's EPT wall stays the single authority. Deploy behind the
+// platform's TLS proxy; binds loopback by default.
+import {{ createServer }} from 'node:http';
+import {{ StreamableHTTPServerTransport }} from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import {{ buildServer, manifest }} from './server.js';
+
+const PORT = parseInt(process.env.MCP_HTTP_PORT || '8917', 10);
+const HOST = process.env.MCP_HTTP_HOST || '127.0.0.1';
+
+const httpServer = createServer((req, res) => {{
+  if (req.url !== '/mcp' && !req.url.startsWith('/mcp?')) {{
+    res.writeHead(404, {{ 'content-type': 'application/json' }});
+    res.end(JSON.stringify({{ ok: false, error: 'MCP lives at POST /mcp' }}));
+    return;
+  }}
+  let body = '';
+  req.on('data', (c) => {{ body += c; }});
+  req.on('end', async () => {{
+    let parsed;
+    try {{ parsed = body ? JSON.parse(body) : undefined; }}
+    catch {{ res.writeHead(400); res.end(); return; }}
+    const auth = req.headers['authorization'];
+    const authOverride = auth ? {{ authorization: auth }} : null;
+    const server = buildServer(authOverride);
+    const transport = new StreamableHTTPServerTransport({{
+      sessionIdGenerator: undefined, // stateless — no session pinning
+      enableJsonResponse: true,
+    }});
+    res.on('close', () => {{ transport.close(); server.close(); }});
+    try {{
+      await server.connect(transport);
+      await transport.handleRequest(req, res, parsed);
+    }} catch (e) {{
+      if (!res.headersSent) {{
+        res.writeHead(500, {{ 'content-type': 'application/json' }});
+        res.end(JSON.stringify({{ ok: false, error: String(e) }}));
+      }}
+    }}
+  }});
+}});
+
+httpServer.listen(PORT, HOST, () => {{
+  const bound = httpServer.address().port; // real port (PORT may be 0 = OS-assigned)
+  console.error(`[{pkg['name']} {pkg['version']}] streamable-http ready at http://${{HOST}}:${{bound}}/mcp — {manifest['contract']}, ${{manifest.tools.length}} tools, auth=passthrough`);
+}});
+"""
+
+    return files
 
 
 # ── emitter 2: the Python twin ───────────────────────────────────────

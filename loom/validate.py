@@ -81,9 +81,11 @@ def validate_manifest(manifest: dict, *, path: str = "<memory>") -> Report:
     if dupes:
         report.errors.append(f"duplicate tool names: {sorted(dupes)}")
 
-    # 13-knob baseline — enforced (as warnings) on control.* surfaces only;
-    # hands/ops surfaces are companions to a control surface that carries it.
-    if manifest.get("contract", "").startswith("control."):
+    # 13-knob baseline — enforced (as warnings) on healing surfaces:
+    # control.* (Class D/A) and ops.* (Class C — the ops shim IS the cloud
+    # control surface, ADR-060 §2). Companion surfaces (hands.*, telemetry.*)
+    # ride alongside a healing surface that carries the baseline.
+    if manifest.get("contract", "").startswith(("control.", "ops.")):
         present = set(names)
         for knob in BASELINE_13:
             if knob == "set_<setting>":

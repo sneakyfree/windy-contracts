@@ -55,9 +55,14 @@ def test_weave_config_schema_accepts_talk_and_rejects_junk():
     assert any("vibes" in e for e in validate_weave(bad))
 
 
-def test_packet_has_the_three_file_skeleton(woven: Path):
-    for rel in ("package.json", "manifest.json", "src/client.js", "src/index.js", "bin/cli.js"):
+def test_packet_has_the_skeleton(woven: Path):
+    for rel in ("package.json", "manifest.json", "src/client.js", "src/server.js", "src/index.js", "bin/cli.js"):
         assert (woven / "mcp-packet" / rel).exists(), rel
+
+
+def test_desktop_packet_has_no_http_entrypoint(woven: Path):
+    # Class D is stdio-only; the remote entrypoint is a cloud-class artifact.
+    assert not (woven / "mcp-packet" / "src" / "http.js").exists()
 
 
 def test_packet_manifest_is_byte_faithful(woven: Path):
@@ -219,17 +224,64 @@ def test_word_baseline_gaps_are_not_advertised():
         assert gap not in names, f"{gap} is a documented gap, must not be advertised"
 
 
-def test_ept_auth_variant_emits_ept_headers():
-    cloud_weave = dict(
-        TALK_WEAVE,
-        product="windy-mind",
-        **{"class": "cloud"},
-        http={"base_default": "https://api.windymind.ai/ops", "base_env": "WINDY_MIND_OPS_URL"},
-        auth={"kind": "ept", "token_env": "WINDY_EPT"},
-        package={"name": "windy-mind-mcp", "version": "0.0.0-loom-test"},
+MIND_WEAVE = {
+    "product": "windy-mind",
+    "class": "cloud",
+    "http": {"base_default": "https://api.windymind.ai", "base_env": "WINDY_MIND_API_URL"},
+    "auth": {"kind": "ept", "token_env": "WINDY_EPT"},
+    "package": {"name": "windy-mind-mcp", "version": "0.0.0-loom-test"},
+}
+
+
+def _mind_manifest() -> dict:
+    return json.loads(
+        (ROOT / "schema" / "fixtures" / "windy-mind" / "ops.mcp.v1.json").read_text()
     )
-    packet = emit_mcp_packet(_manifest(), cloud_weave)
+
+
+def test_ept_auth_variant_emits_ept_headers():
+    packet = emit_mcp_packet(_manifest(), MIND_WEAVE)
     assert "WINDY_EPT" in packet["src/client.js"]
     assert "readFileSync" not in packet["src/client.js"].split("const BASE")[0].split("// EPT auth")[1]
-    twin = emit_python_twin(_manifest(), cloud_weave)
+    twin = emit_python_twin(_manifest(), MIND_WEAVE)
     assert "WINDY_EPT" in twin
+
+
+@pytest.fixture(scope="module")
+def mind_woven(tmp_path_factory) -> Path:
+    out = tmp_path_factory.mktemp("mind")
+    wv = out / "weave.json"
+    wv.write_text(json.dumps(MIND_WEAVE))
+    weave(ROOT / "schema" / "fixtures" / "windy-mind" / "ops.mcp.v1.json", wv, out)
+    return out
+
+
+def test_cloud_class_gets_streamable_http_entrypoint(mind_woven: Path):
+    http = mind_woven / "mcp-packet" / "src" / "http.js"
+    assert http.exists(), "cloud class must emit the remote /mcp entrypoint"
+    src = http.read_text()
+    assert "StreamableHTTPServerTransport" in src
+    assert "/mcp" in src
+    # EPT passthrough: the caller's Authorization becomes authOverride.
+    assert "req.headers['authorization']" in src
+    assert "authOverride" in src
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node not on PATH")
+def test_cloud_generated_js_parses(mind_woven: Path):
+    for rel in ("src/client.js", "src/server.js", "src/index.js", "src/http.js"):
+        subprocess.run(
+            ["node", "--check", str(mind_woven / "mcp-packet" / rel)],
+            check=True, capture_output=True,
+        )
+
+
+def test_ops_contract_is_a_healing_surface(mind_woven: Path):
+    # The Mind ops shim carries the baseline (Class C control surface), and
+    # its implemented tools bind to real api.windymind.ai routes.
+    m = _mind_manifest()
+    assert m["contract"].startswith("ops.")
+    assert all("transport" in t for t in m["tools"])
+    # remote-only EPT: no token file reads leak into the client
+    packet = emit_mcp_packet(m, MIND_WEAVE)
+    assert "control.token" not in packet["src/client.js"]
