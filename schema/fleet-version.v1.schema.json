@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sneakyfree/windy-contracts/schema/fleet-version.v1.schema.json",
+  "title": "Windy fleet version manifest, v1",
+  "$comment": "ADR-060 §5 (the Steamroller). ONE document, published by admin (admin.windyword.ai/v1/fleet-versions), that every product's check_for_update resolves against. It answers, per product per channel: what is current, what is the minimum still-supported version, and where to get it. This is the SENDING half of updates — surfaces.json + a surface's own version tell you what's INSTALLED; this tells you what SHOULD be installed. An agent diffs the two to know what to offer to update.",
+  "type": "object",
+  "required": ["schema_version", "products"],
+  "properties": {
+    "schema_version": { "const": "fleet-version.v1" },
+    "generated_at": {
+      "type": "string",
+      "$comment": "ISO-8601. Stamped by the publisher (admin), NOT by the Loom — the Loom is deterministic and has no clock."
+    },
+    "products": {
+      "type": "object",
+      "$comment": "Keyed by product dev-name (windy-word, windy-mind, ...).",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["channels"],
+        "properties": {
+          "doctrine": { "type": "string", "$comment": "e.g. 'ADR-060 v1.0' — the doctrine version this product complies with." },
+          "channels": {
+            "type": "object",
+            "$comment": "A product may ship on several channels (stable / beta / the Windy-0 canary ring). check_for_update names its channel.",
+            "additionalProperties": {
+              "type": "object",
+              "required": ["current"],
+              "properties": {
+                "current": { "type": "string", "$comment": "the version to offer, e.g. 1.11.0" },
+                "minimum": { "type": "string", "$comment": "below this = must-update (security/breaking); an agent should push, not merely offer." },
+                "kind": {
+                  "type": "string",
+                  "enum": ["npm", "r2", "image", "native"],
+                  "$comment": "how it's distributed — the Steamroller rail (ADR-060 §5). npm packet, R2 desktop build, cloud image rebuild, or native (agent self-update)."
+                },
+                "source": { "type": "string", "$comment": "the fetch handle: npm package name, downloads.<domain> URL, image ref, etc." },
+                "notes": { "type": "string", "$comment": "grandma-English 'what this fixes' — the agent reads this aloud when offering the update." },
+                "rollout": {
+                  "type": "object",
+                  "$comment": "staged rollout (ADR-060 §5): rings gate exposure. Absent = 100%.",
+                  "properties": {
+                    "ring": { "type": "string", "enum": ["canary", "early", "all"] },
+                    "percent": { "type": "number", "minimum": 0, "maximum": 100 }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
