@@ -5,6 +5,44 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — GAP-CLOSING #2: Translate ops baseline SHIPPED (last MF1 hole closed)
+
+- **Platform taken: windy-translate** (gap-closing lane, impact order #2).
+  windy-pro #235 + windy-contracts #20, both merged.
+- **Shipped (all additive, services/translate-api/):** `GET /version`
+  (MF1 canonical — was missing entirely, the fleet's last MF1
+  non-compliance); **opt-in bearer wall** `WINDY_TRANSLATE_TOKEN`
+  (per-request read, constant-time; /health + /version exempt; unset =
+  today's open loopback, so prod unchanged until the Grant-gated env
+  flip); `GET /ops/logs` (500-entry ring, content-free BY CONSTRUCTION
+  — fixed event vocabulary + enum codes; worker errors categorized,
+  never stored raw, since tracebacks can embed translated text);
+  `POST /ops/selftest` (canary through the real NLLB worker + SQLite
+  round-trip, per-stage pass/fail). require.main guard + exported app
+  makes the service testable without the model; entry path unchanged.
+- **Re-weave:** manifest 3→6 tools (get_status/get_logs/run_selftest
+  gap→implemented); weave auth ept→install_token (WINDY_TRANSLATE_TOKEN)
+  — a loopback internal service's real wall, not aspirational EPT.
+- **📐 DOCTRINE CATCH (recorded in the manifest, worth every future
+  manifest author knowing):** a tool payload must NOT use top-level
+  `ok` — the ADR-060 invoke envelope reserves it, and the woven packet
+  (correctly) reported an honest failing selftest as a failed CALL.
+  Payload field renamed `passed`. Found only because the E2E drove the
+  REAL service through the woven packet.
+- **Proven:** 8/8 new node:test (npm test); boot smoke on the real
+  entry path (ops ring captured real server_start/worker_start/
+  worker_exit); **LIVE E2E** real MCP client → woven packet → the
+  actual service with the wall ON (6 tools, MF1 get_status,
+  content-free get_logs, honest per-stage selftest, token satisfied);
+  conformance static byte-identical; make check green post-ADR-061
+  (67 tests, 12 fixtures).
+- **🔴 GRANT-GATED to go LIVE:** restart windy-translate.service from
+  main; optionally set WINDY_TRANSLATE_TOKEN in its env (+ the same
+  value in the ops-shim env) to turn the wall on.
+- **Next:** impact order #3 = windy-registry R2-404 investigation
+  (live prod degradation, may not be a code change), or the recurring
+  cloud four starting with Mind.
+
 ## 2026-07-13 (night) — ADR-061 H2+H3 LANDED (Grant concurred): doctrine unified
 
 - **windy-contracts #19.** Both reconciliation decisions canonized.
