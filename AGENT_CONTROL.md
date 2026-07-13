@@ -9,8 +9,12 @@
 > five adversarial review rounds) is the reference implementation this law
 > was extracted from.
 >
-> **Status: DRAFT for Grant's markup — becomes law when the PR merges.**
-> Change control thereafter: additive → v1.1 via PR; breaking → v2 file and
+> **Status: LAW (merged). v1.1 amendments 2026-07-13 (ADR-061, Grant-decided):
+> this is the ONE umbrella doctrine (H3)** — the parallel "Fable-7.5 Doctrine"
+> (DNA v0.3.0, the product-surface law) is folded in as §1.1 below, so there is
+> a single Agent Control Doctrine with three surface archetypes, not two
+> competing docs. Trust vocabulary unified on the EI_CAPABILITY_MATRIX bands
+> (H2, §3.5). Change control: additive → v1.x via PR; breaking → v2 file and
 > tell Grant. Never silently mutate.
 
 ---
@@ -63,6 +67,34 @@ This is the invariant that keeps the 2027 model from finding a locked door.
 
 **Co-tenant rule:** the agent and the user share the same machine and the
 same state; neither has a private back door.
+
+### 1.1 The three surface archetypes (ADR-061)
+A platform's *class* (§2) is its transport regime. Orthogonal to it is the
+*surface archetype* — what the knobs are FOR — encoded in the contract name:
+
+| Archetype | Contract | The knobs | Reference |
+|---|---|---|---|
+| **Ops / healing** | `ops.mcp.v1`, `control.mcp.v1` | heal the platform: health, restart, logs, redeploy, safe-mode | this doctrine |
+| **Hands** | `hands.mcp.v1` | drive OTHER apps (Talk drives the desktop) | ADR-058 |
+| **Product / agent-first** | `<product>.mcp.v1` | drive the product itself: buy a domain, publish a site, create a project | Fable-7.5 Doctrine (folded in here) |
+
+The **product archetype** is the cloud/code lane's "Fable-7.5 Doctrine" (DNA
+v0.3.0), folded into this umbrella by H3. Its product law is vendored as
+binding for `<product>.mcp.v1` surfaces: **capability-completeness** ("if it's
+in the runbook, it's a tool — throttle by trust, never by omission");
+**errors are repair pointers** (`{code, speak, machine_cause,
+remediation_tool}`); **verifiable one-shot pipelines** (`state_proof` +
+`next_actions`, idempotent, exactly one human confirm per money/publish
+bundle); the **capability-class ladder** (read → act-own → repair-own →
+operator, §3.5). Its consent + trust contracts — **CONFIRM_FLOW.v1** and
+**EI_CAPABILITY_MATRIX.v1** — are the ecosystem's shared consent/trust source
+of truth (§3.5).
+
+When to use which: agent-first PRODUCT cells (domains, sites, code-web —
+where the point is that the agent *operates the product*) ship a product
+surface AND an ops surface. Infrastructure services (Mind, Search) ship an ops
+surface only; their machine-consumed product API stays OUT per §2. The two are
+complementary layers, never a substitute for each other.
 
 ---
 
@@ -185,25 +217,36 @@ tool call**. That triad is what turns a frontier model from a smart observer
 into a mechanic.
 
 ### 3.5 The unified trust algebra
-The fleet currently speaks three trust dialects — Talk's tiers + autonomy
-slider, Fly's bands, the cloud cells' EI-FICO matrix. The doctrine crowns
-one algebra with **two axes**:
+The fleet spoke several trust dialects — Talk's tiers, Fly's bands, the cloud
+cells' EI-FICO matrix. This doctrine crowns **one** algebra with **two axes**:
 
 - **Knob danger tier** (in the contract, per tool): `auto_allow` /
-  `ask_first` / `always_confirm`. Talk's vocabulary wins.
-- **Caller identity band**: EPT integrity score (the EI_CAPABILITY_MATRIX
-  bands), or "local co-tenant" on Class D where the human is present.
+  `ask_first` / `always_confirm`. Talk's vocabulary.
+- **Caller band**: the Eternitas EI score, named in the **canonical
+  EI_CAPABILITY_MATRIX vocabulary** (ADR-061 H2, Grant-decided 2026-07-13):
+  **Platinum ≥900 · Gold 750–899 · Standard 600–749 · Watch 400–599 ·
+  Untrusted <400/revoked**. (ADR-060's original SANDBOX/USER/TRUSTED/OWNER are
+  DEPRECATED aliases — accepted for transition, normalize to the EI names;
+  see `schema/band-ei-mapping.v1.json`.) On Class D the present human is the
+  local co-tenant.
 
-Effective behavior = tier × band. Fly's SANDBOX/USER/TRUSTED/OWNER bands map
-onto EI score ranges (mapping table to be pinned in `schema/` during the
-Loom phase). Confirmation UX differs by class — voice/tap on desktop,
-CONFIRM_FLOW HMAC tokens in the cloud — but the algebra is one.
+Orthogonal to the band is the **capability class** — what *kind* of action:
+`read` → `act-own` → `repair-own` (Gold+) → `operator`. The **operator** class
+is the OPS/healing surface (restart, redeploy, logs) and is gated by an
+**operator-role EPT claim, NOT by EI band** — so even Platinum grandma doesn't
+restart a service; a Windy operator/Kit agent does. She *can* repair her own
+resources (repair-own, Gold+). Band gates *how much*; class gates *what kind*.
 
-**Invariants no combination can override:** money actions and `apply_update`
-always confirm, at every autonomy level, for every band. Agents can never
-self-escalate — a standing grant is given by the USER via the confirmer,
-never assumed. Denials are structured, never silent. Band filtering applies
-to *discovery* too: a low-band caller never even sees the high-tier tools.
+Effective behavior = tier × band × class. Confirmation UX differs by class —
+voice/tap on desktop, CONFIRM_FLOW.v1 HMAC tokens in the cloud — but the
+algebra is one. Source of truth for the bands: `EI_CAPABILITY_MATRIX.v1`.
+
+**Invariants no combination can override:** money actions, publish, and
+`apply_update` always confirm, for every band — Platinum included; no band
+buys silent spending. Agents can never self-escalate — a standing grant is
+given by the user via the confirmer, never assumed. Denials are structured,
+never silent (Untrusted → denied + owner notified). Band filtering applies to
+*discovery* too: a low-band caller never even sees the high-tier tools.
 
 ### 3.6 The doctor is not in the patient
 The control surface must be hosted by a process the product cannot take

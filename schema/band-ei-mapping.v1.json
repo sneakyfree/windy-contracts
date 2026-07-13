@@ -1,48 +1,76 @@
 {
-  "$comment": "ADR-060 §3.5 — the single trust algebra: effective behavior = knob tier × caller band. This file pins the caller-band axis: how an Eternitas EI score (EI_CAPABILITY_MATRIX.v1, windy-cloud DNA v0.2.0) maps onto the fleet's band vocabulary (windy-agent Capability Plane: SANDBOX/USER/TRUSTED/OWNER), and what each band may do with each tier. Additive → v1.1 via PR; breaking → v2 and tell Grant.",
+  "$comment": "ADR-060 §3.5 + ADR-061 H2 — the UNIFIED trust vocabulary for the whole ecosystem. Grant decided (2026-07-13) to canonicalize on the EI_CAPABILITY_MATRIX.v1 band names (Platinum/Gold/Standard/Watch/Untrusted), NOT ADR-060's original SANDBOX/USER/TRUSTED/OWNER. Source of truth for the bands + thresholds: EI_CAPABILITY_MATRIX.v1.md (FROZEN, vendored verbatim in the four cloud cells). This file pins how that vocabulary drives the agent-control tier algebra + the deprecated ADR-060 aliases for transition. Additive → v1.1 via PR; breaking → v2 and tell Grant.",
   "mapping": "band-ei.v1",
+  "source_of_truth": "EI_CAPABILITY_MATRIX.v1 (windy-cloud cells contracts/) — the canonical band definitions, thresholds, velocity multipliers, and fraud-hold rules. This file governs only the agent-control tier × band interaction.",
   "invariants": {
     "$comment": "No band, no autonomy level, no combination overrides these.",
-    "always_confirm_floor": "Tools tiered always_confirm (money actions, apply_update, reset_to_defaults, run_shell) confirm on EVERY invocation for EVERY band — no session grants, no autonomy override.",
+    "always_confirm_floor": "Tools tiered always_confirm (money actions, apply_update, reset_to_defaults, run_shell, publish) confirm on EVERY invocation for EVERY band — Platinum included. No band buys silent spending (EI_CAPABILITY_MATRIX 'Hard line'). Consent governed by CONFIRM_FLOW.v1.",
     "no_self_escalation": "A standing grant is given by the USER via the confirmer; an agent can never grant itself one.",
-    "structured_denial": "A denial returns {ok:false, error:'denied'} — never silence.",
-    "discovery_filtering": "A caller below a tool's band_floor never sees the tool in tools/list — gating starts at discovery, not invocation."
+    "structured_denial": "A denial returns {ok:false, error:'denied'} — never silence. Untrusted: denied + owner notified.",
+    "discovery_filtering": "A caller below a tool's band_floor never sees the tool in tools/list — gating starts at discovery, not invocation.",
+    "fail_safe": "EI lookup failure → treat as Watch for writes, Standard for reads (fail-safe, not fail-open)."
   },
   "bands": [
     {
-      "band": "SANDBOX",
-      "ei_range": "no EPT, or EPT with EI < 400",
-      "sees": "nothing by default (the stinky-bot treatment — ADR-060 §0); a surface MAY expose get_health alone to sandbox callers as a mercy knob",
-      "tiers": { "auto_allow": "denied", "ask_first": "denied", "always_confirm": "denied" }
+      "band": "Platinum",
+      "ei": ">=900",
+      "velocity": "x10",
+      "adr060_alias": "OWNER",
+      "tiers": { "auto_allow": "execute", "ask_first": "auto_allow (non-money)", "always_confirm": "confirm per call — yes, even Platinum" }
     },
     {
-      "band": "USER",
-      "ei_range": "EPT in good standing, EI 400-699 — or local co-tenant on a Class D machine (human present, install token held)",
-      "sees": "read/diagnose knobs + reversible mutations",
-      "tiers": { "auto_allow": "execute", "ask_first": "confirm per call; user MAY grant session always-allow", "always_confirm": "confirm per call" }
+      "band": "Gold",
+      "ei": "750-899",
+      "velocity": "x4",
+      "adr060_alias": "TRUSTED",
+      "tiers": { "auto_allow": "execute", "ask_first": "auto_allow (non-money)", "always_confirm": "confirm per call" },
+      "note": "repair-own capability class unlocks at Gold+."
     },
     {
-      "band": "TRUSTED",
-      "ei_range": "EI 700-899",
-      "sees": "USER + lifecycle knobs (restart_app, safe mode, reconnect chains) + update knobs",
-      "tiers": { "auto_allow": "execute", "ask_first": "execute under a standing user grant, else confirm", "always_confirm": "confirm per call" }
+      "band": "Standard",
+      "ei": "600-749",
+      "velocity": "x1",
+      "adr060_alias": "USER",
+      "tiers": { "auto_allow": "execute", "ask_first": "confirm per call; user MAY grant a session always-allow", "always_confirm": "confirm per call" }
     },
     {
-      "band": "OWNER",
-      "ei_range": "EI >= 900, bound to the owning wi_ account — velocity multiplier x10 per EI_CAPABILITY_MATRIX.v1",
-      "sees": "everything the surface has",
-      "tiers": { "auto_allow": "execute", "ask_first": "execute (standing owner grant)", "always_confirm": "confirm per call — yes, even the owner" }
+      "band": "Watch",
+      "ei": "400-599",
+      "velocity": "x0.5",
+      "adr060_alias": "(none — a middle tier ADR-060's 4-band scheme lacked)",
+      "tiers": { "auto_allow": "execute (frequent challenges)", "ask_first": "confirm per call", "always_confirm": "confirm per call; mandatory fraud holds" }
+    },
+    {
+      "band": "Untrusted",
+      "ei": "<400 or revoked",
+      "velocity": "read-only",
+      "adr060_alias": "SANDBOX",
+      "tiers": { "auto_allow": "reads only", "ask_first": "denied + owner notified", "always_confirm": "denied + owner notified" }
     }
   ],
+  "capability_classes": {
+    "$comment": "The Fable-7.5 Doctrine rider — WHAT KIND of action, orthogonal to the EI band (which gates HOW MUCH). A manifest tool belongs to one class; band_floor gates within it.",
+    "read": "read-only introspection — available broadly (Watch+ typically).",
+    "act-own": "normal operations on the caller's OWN resources.",
+    "repair-own": "deep diagnostics/repair on the caller's OWN resources — unlocks at Gold+ (EI).",
+    "operator": "runbook-as-tools on the OPS/healing control surface (restart/redeploy/logs). Gated by an OPERATOR-ROLE EPT claim (Windy staff / Kit agents), NOT by EI band — so an ops/healing tool is operator-class regardless of a caller's EI. This is the doctrine's ops surface (§3.6 'the doctor is not in the patient')."
+  },
   "band_floor_defaults": {
-    "$comment": "Applied when a manifest tool omits band_floor.",
-    "auto_allow": "USER",
-    "ask_first": "USER",
-    "always_confirm": "TRUSTED"
+    "$comment": "Applied when a manifest tool omits band_floor. Named in the canonical EI-matrix vocabulary.",
+    "auto_allow": "Standard",
+    "ask_first": "Standard",
+    "always_confirm": "Gold"
+  },
+  "adr060_alias_map": {
+    "$comment": "Transition aliases (ADR-061 H2). Manifests may still use the deprecated ADR-060 names; the validator accepts both. Normalize to the EI-matrix names.",
+    "OWNER": "Platinum",
+    "TRUSTED": "Gold",
+    "USER": "Standard",
+    "SANDBOX": "Untrusted"
   },
   "confirmation_transport": {
     "desktop": "voice or tap via the product confirmer (windytalk hands/tiers.py pattern)",
     "cloud": "CONFIRM_FLOW.v1 — single-use HMAC tokens, voice-yes first-class, composite bundles = one yes",
-    "agent-host": "conversational confirm in-channel (windy-agent pattern); /permit-style block-and-wait is a future addition, not assumed"
+    "agent-host": "conversational confirm in-channel (windy-agent pattern)"
   }
 }
