@@ -57,7 +57,7 @@ shim behind the platform's TLS proxy at `/mcp`.
 
 | Platform | Repo | THE gap | Notes |
 |---|---|---|---|
-| **windy-chat** | `~/windy-chat` | 🌟 **the fleet-health AGGREGATOR** | Chat is ~13 services over Synapse; per-service `/health` isn't externally routed and there's no aggregator, so it's mostly BLIND. **Highest-impact gap in the fleet.** Build `GET /api/v1/ops/health` (fan-out to every service + Synapse, nginx-routed, EPT-gated) per **`docs/MULTI-SERVICE-OPS.md`** — it becomes get_health + get_status + get_capabilities at once. Then re-weave with those three tools bound to it. |
+| **windy-chat** | `~/windy-chat` | ✅ **aggregator SHIPPED 2026-07-13** (windy-chat #143 + #144, windy-contracts #17) — `GET /api/v1/ops/health` built + re-woven (get_health/get_status/get_capabilities bound). 🔴 Grant-gated deploy to go LIVE (onboarding rebuild + live nginx `/api/v1/ops/` route + `WINDY_OPS_FLEET` env). Remaining gaps: per-service reconnect/restart, get_logs (scrubbed), run_selftest (Synapse canary), apply_update | Pattern doc **`docs/MULTI-SERVICE-OPS.md`** proven in production code. |
 
 ## Class D (desktop)
 
@@ -76,7 +76,7 @@ shim behind the platform's TLS proxy at `/mcp`.
 
 ## Recommended order (by impact)
 
-1. **windy-chat aggregator** — the one platform that's still mostly blind; highest impact.
+1. ~~**windy-chat aggregator**~~ ✅ DONE 2026-07-13 (#143/#144/windy-contracts #17; Grant-gated deploy pending).
 2. **windy-translate `/version`** — smallest win, removes an MF1 non-compliance.
 3. **windy-registry R2-404** — a real live production degradation (investigate, may not be a code change).
 4. The recurring cloud four, one platform at a time (Mind first — it's the template the others copy).

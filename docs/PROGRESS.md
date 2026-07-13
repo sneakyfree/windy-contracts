@@ -5,6 +5,46 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — 🌟 GAP-CLOSING: Chat fleet-health aggregator SHIPPED (the fleet's biggest blind spot, closed)
+
+- **Platform taken: windy-chat** (gap-closing lane, per GAP-CLOSING.md
+  impact order #1). Chat was ~11 services + Synapse with NO externally
+  reachable per-service health and NO aggregator — mostly blind.
+- **windy-chat #143 (merged): `GET /api/v1/ops/health`** on onboarding
+  (8101), the MULTI-SERVICE-OPS pattern made real: parallel fan-out to
+  every service's internal /health + /version plus Synapse; overall
+  ok/degraded/down (Synapse down ⇒ down); per-service
+  status/version/commit/uptime/deps/duration. Auth = EPT (agents) OR
+  account JWT / CHAT_API_TOKEN (humans/services), structured 401s name
+  the remediation (§3.3). Privacy = WHITELIST-only forwarding (a planted
+  content field provably never leaks — tested). Fleet registry =
+  compose-DNS defaults, `WINDY_OPS_FLEET` env replaces wholesale
+  (per-request read; prod pins the live set). Content-free
+  `control.action` telemetry emit (§3.9). nginx `/api/v1/ops/` route
+  added to the repo conf (authoritative superset).
+- **windy-chat #144 + windy-contracts #17 (merged): re-weave.** Manifest
+  now advertises the aggregator triad — get_health + get_status +
+  get_capabilities, ALL bound to the one route. baseline_mapping 3 knobs
+  gap→implemented; `$headline_gap` CLOSED. Procession test updated to pin
+  the triad.
+- **Proven:** 7 new node:test cases; onboarding suites 60/60 node:test +
+  22/22 jest (1 integration-pro fail = pre-existing on main,
+  stash-verified); loom validate 0 errors; woven packet booted; REAL MCP
+  client E2E vs mock surface (3 tools, EPT bearer forwarded,
+  constellation round-trip, unknown tool rejected); conformance static
+  gate byte-identical; make check 62 green.
+- **🔴 GRANT-GATED to make it LIVE:** (1) rebuild+`up -d --no-deps
+  onboarding` (both compose files + `--env-file .env.production`),
+  (2) add `/api/v1/ops/` location to the HAND-MANAGED live nginx conf
+  (`nginx -t` + reload, never restart), (3) set `WINDY_OPS_FLEET` in live
+  onboarding env to the actual live service set. Manifest honestly says
+  "staged until deployed — probe before trusting mid-incident."
+- **Next for chat** (informed by the new read view): per-service
+  reconnect/restart knobs, get_logs (scrubbed), run_selftest (Synapse
+  canary), SSH-free apply_update. Next for this lane: another
+  GAP-CLOSING.md pick (Translate /version = smallest win, or Drops
+  R2-404 investigation).
+
 ## 2026-07-13 (night) — L5 sentinel + gap-closing handoff (parallel lane)
 
 - **Gap-closing FANNED OUT:** Grant handed a fresh Fable terminal the
