@@ -1,0 +1,58 @@
+{
+  "contract": "ops.mcp.v1",
+  "doctrine": "ADR-060 v1.0",
+  "product": "windy-mail",
+  "class": "cloud",
+  "mcp_protocol": "2025-06-18",
+  "$comment": "Windy Mail ops surface — Class C (cloud). Clarifying finding: Mail's PRODUCT + ADMIN surface (webmail send/read, /api/v1/provision, account suspend/reinstate) stays OUT of this ops contract per §2 — same line Mind's /v1/chat and Search's /v1/search sit behind. Mail's account-admin mutations are product-domain business logic, not service-healing, so this remains a clean read-ops surface. Mail-specific value: /health already reports Stalwart (the mail server) + db + redis component status, so get_health natively carries the deliverability dimension. Reads bound via transport on https://mail.windymail.ai; EPT-gated.",
+  "baseline_mapping": {
+    "get_health": { "status": "implemented", "maps_to": "GET /health", "note": "component status incl. Stalwart mail server — the deliverability dimension." },
+    "get_status": { "status": "implemented", "maps_to": "GET /version" },
+    "get_capabilities": { "status": "implemented", "maps_to": "GET /health/ready", "note": "200 only when db + Stalwart + redis all healthy." },
+    "get_config": { "status": "gap", "note": "no config-read endpoint; Stalwart config is file/env at deploy." },
+    "get_logs": { "status": "gap", "note": "no content-free logs endpoint (privacy hard line: never expose mail bodies/subjects)." },
+    "run_selftest": { "status": "gap", "note": "the true mail selftest = send a canary to a loopback address and confirm acceptance + delivery; not built." },
+    "reconnect": { "status": "unsupported", "note": "components reconnect via their own pools; nothing agent-toggleable." },
+    "restart_app": { "status": "gap", "note": "out-of-band (systemd/Stalwart); ops plane outside the patient." },
+    "enter_safe_mode": { "status": "unsupported", "note": "degraded-mode is reported by /health/ready, not toggled." },
+    "exit_safe_mode": { "status": "unsupported" },
+    "set_setting": { "status": "gap", "note": "no runtime-config mutation." },
+    "check_for_update": { "status": "gap", "note": "wire to the Steamroller fleet version manifest (L2)." },
+    "apply_update": { "status": "gap", "note": "SSH-free health-gated redeploy hook; §7 (Actions billing-lock)." },
+    "reset_to_defaults": { "status": "unsupported", "note": "NEVER — this service holds real mailboxes; a factory reset would destroy user mail." }
+  },
+  "tools": [
+    {
+      "name": "get_health",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "The FIRST call when Windy Mail seems broken. Component health of the mail system: the database, the Stalwart mail server itself, and Redis. If mail isn't sending or arriving, this shows which piece is down.",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "transport": { "method": "GET", "path": "/health" }
+    },
+    {
+      "name": "get_status",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "Read Windy Mail's deployment identity — which build is serving right now. Use this to confirm whether a fix that was meant to deploy is actually live.",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "transport": { "method": "GET", "path": "/version" }
+    },
+    {
+      "name": "get_capabilities",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "Report whether Windy Mail is fully READY to serve — returns healthy only when the database, the Stalwart mail server, and Redis are all up. Use this to distinguish 'the app is running' from 'mail can actually flow'.",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "transport": { "method": "GET", "path": "/health/ready" }
+    },
+    {
+      "name": "get_stats",
+      "tier": "auto_allow",
+      "band_floor": "TRUSTED",
+      "description": "Read system-wide Windy Mail statistics — how many accounts exist and how they break down by status (active, suspended, and so on). An admin-level diagnostic for 'is the mail system healthy at scale'. Counts only, never message content.",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "transport": { "method": "GET", "path": "/api/v1/stats" }
+    }
+  ]
+}

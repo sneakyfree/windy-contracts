@@ -347,3 +347,24 @@ def test_search_procession_validates_and_weaves_cloud(tmp_path):
     out = tmp_path / "out"
     weave(fx, wv, out)
     assert (out / "mcp-packet" / "src" / "http.js").exists()  # cloud → remote entrypoint
+
+
+def test_mail_procession_validates_and_weaves_cloud(tmp_path):
+    from loom.validate import validate_manifest
+    fx = ROOT / "schema" / "fixtures" / "windy-mail" / "ops.mcp.v1.json"
+    m = json.loads(fx.read_text())
+    r = validate_manifest(m)
+    assert r.ok, r.errors
+    # Mail exercises a per-tool band_floor (get_stats is TRUSTED, admin-read)
+    stats = next(t for t in m["tools"] if t["name"] == "get_stats")
+    assert stats["band_floor"] == "TRUSTED"
+    wv = tmp_path / "weave.json"
+    wv.write_text(json.dumps(dict(MIND_WEAVE, product="windy-mail",
+        http={"base_default": "https://mail.windymail.ai", "base_env": "WINDY_MAIL_API_URL"},
+        package={"name": "windy-mail-mcp", "version": "0.0.0-loom-test"})))
+    out = tmp_path / "out"
+    weave(fx, wv, out)
+    assert (out / "mcp-packet" / "src" / "http.js").exists()
+    # the TRUSTED band floor rides into the generated Python twin
+    twin = (out / "windy_mail_twin.py").read_text()
+    assert "TRUSTED" in twin
