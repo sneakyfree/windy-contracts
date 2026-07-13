@@ -5,6 +5,21 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — ADR-061 H2+H3 LANDED (Grant concurred): doctrine unified
+
+- **windy-contracts #19.** Both reconciliation decisions canonized.
+- **H2 trust vocab:** canonical = EI_CAPABILITY_MATRIX bands (Platinum≥900/
+  Gold750-899/Standard600-749/Watch400-599/Untrusted<400). ADR-060
+  SANDBOX/USER/TRUSTED/OWNER = deprecated aliases (validator accepts both;
+  Mail's TRUSTED still validates). band-ei-mapping.v1 rewritten as canonical
+  bridge + capability-class ladder (read→act-own→repair-own[Gold+]→operator).
+  KEY: operator class (ops/healing knobs) gated by operator-role EPT, NOT EI —
+  even Platinum grandma doesn't restart a service.
+- **H3 one umbrella:** AGENT_CONTROL.md §1.1 absorbs the Fable-7.5 product law
+  (3 surface archetypes: ops/hands/product); CONFIRM_FLOW.v1 + EI_CAPABILITY_
+  MATRIX.v1 = shared consent/trust SoT. §3.5 = tier×band×class. No more 2 docs.
+- make check 67. Cloud/code reconciliation COMPLETE.
+
 ## 2026-07-13 (night) — cloud/code reconciliation (ADR-061)
 
 - **The cloud/code lane's MCP work RECONCILED** (windy-contracts #18). Verdict:
