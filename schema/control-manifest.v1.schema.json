@@ -22,8 +22,8 @@
     },
     "class": {
       "type": "string",
-      "enum": ["desktop", "cloud", "agent-host"],
-      "$comment": "ADR-060 §2 platform class. Validator warns when absent."
+      "enum": ["desktop", "cloud", "agent-host", "cloud-service"],
+      "$comment": "ADR-060 §2 platform class (transport regime). 'cloud-service' is a DEPRECATED alias for 'cloud' used by the Fable-7.5 product-surface lane; accepted for validation, normalize to 'cloud' (ADR-061 H1)."
     },
     "mcp_protocol": {
       "type": "string",

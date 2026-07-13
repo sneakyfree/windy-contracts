@@ -1,0 +1,171 @@
+{
+  "auth": "bearer-ept-or-windy-jwt",
+  "class": "cloud-service",
+  "contract": "windy-cloud-domains.mcp.v1",
+  "endpoint": "/mcp",
+  "protocolVersion": "2025-06-18",
+  "tools": [
+    {
+      "description": "Starts a domain purchase on the owner's saved card. ALWAYS returns confirm_required first: RELAY the question to the human VERBATIM and call confirm_purchase only after they say yes (a spoken yes counts). Pass site_ref to bundle buy+connect into that ONE yes. Returns { order_id, confirm_required, confirm_token, question, speak }. WARNING: real money once confirmed \u2014 never invent your own question.",
+      "inputSchema": {
+        "properties": {
+          "fqdn": {
+            "type": "string"
+          },
+          "idempotency_key": {
+            "type": "string"
+          },
+          "site_ref": {
+            "default": "",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fqdn",
+          "idempotency_key"
+        ],
+        "type": "object"
+      },
+      "name": "buy_domain",
+      "tier": "always_confirm"
+    },
+    {
+      "description": "Completes a purchase AFTER the human said yes to the exact question from buy_domain. Returns { order_id, state, speak, state_proof, next_actions }. The charge happens here \u2014 only call with a real yes.",
+      "inputSchema": {
+        "properties": {
+          "confirm_token": {
+            "type": "string"
+          },
+          "order_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id",
+          "confirm_token"
+        ],
+        "type": "object"
+      },
+      "name": "confirm_purchase",
+      "tier": "always_confirm"
+    },
+    {
+      "description": "The full knob list of this service with trust tiers \u2014 how a brand-new agent learns what it can do here. Returns the capabilities manifest. SAFE TO RUN; also served at /.well-known/windy-capabilities.json.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "get_capabilities",
+      "tier": "auto_allow"
+    },
+    {
+      "description": "The answer to \"what domains do I own?\". Returns { domains: [{fqdn, status, auto_renew, expires_at, speak}], speak }.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "list_my_domains",
+      "tier": "auto_allow"
+    },
+    {
+      "description": "Deep repair: re-renders and re-applies the newest DNS intent for a domain you own (desired-state, safe to repeat). Use when a site stopped resolving. Gold+ Eternitas standing required. Returns { fqdn, intent, applied, speak, state_proof }.",
+      "inputSchema": {
+        "properties": {
+          "fqdn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fqdn"
+        ],
+        "type": "object"
+      },
+      "name": "repair_dns",
+      "tier": "ask_first"
+    },
+    {
+      "description": "Deep repair: re-reads the registrar's facts for a domain you own and reconciles our records (status, registration). Safe to repeat. Gold+ standing required. Returns { fqdn, registrar_known, status, speak }.",
+      "inputSchema": {
+        "properties": {
+          "fqdn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fqdn"
+        ],
+        "type": "object"
+      },
+      "name": "resync_domain",
+      "tier": "ask_first"
+    },
+    {
+      "description": "Windy Doctor for the domains service \u2014 use FIRST when anything seems wrong. Returns { checks: [{status, severity, finding, remediation}] } where remediation is a LITERAL tool call to make next. SAFE TO RUN.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "run_diagnostics",
+      "tier": "auto_allow"
+    },
+    {
+      "description": "The answer to \"is grandmarose.com taken?\" \u2014 checks one exact name. Returns { fqdn, available, price_cents?, price_pending?, speak }. SAFE TO RUN anytime; charges nothing.",
+      "inputSchema": {
+        "properties": {
+          "fqdn": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fqdn"
+        ],
+        "type": "object"
+      },
+      "name": "search_domains",
+      "tier": "auto_allow"
+    },
+    {
+      "description": "Turns yearly auto-renew on or off for a domain. ALWAYS returns confirm_required first: RELAY the question VERBATIM \u2014 turning renewal OFF can silently lose the domain a year later, so the human must say yes. Returns { fqdn, auto_renew, speak } once confirmed.",
+      "inputSchema": {
+        "properties": {
+          "confirm_token": {
+            "type": "string"
+          },
+          "domain_id": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "domain_id",
+          "enabled"
+        ],
+        "type": "object"
+      },
+      "name": "set_auto_renew",
+      "tier": "always_confirm"
+    },
+    {
+      "description": "The answer to \"what should we call it?\" \u2014 brainstorms available names from personal hints (a granddaughter's name, a nickname, a business word). Pass 1-8 short hints from YOUR conversation; they are never stored. Returns { suggestions: [{fqdn, price_cents, speak}], speak }.",
+      "inputSchema": {
+        "properties": {
+          "context_hints": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8,
+            "type": "array"
+          }
+        },
+        "required": [
+          "context_hints"
+        ],
+        "type": "object"
+      },
+      "name": "suggest_domains",
+      "tier": "auto_allow"
+    }
+  ]
+}
