@@ -5,6 +5,35 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — GAP-CLOSING #7: Clone healing reads SHIPPED — 🏁 the recurring-four READ passes are COMPLETE fleet-wide
+
+- **Windy-Clone #58 merged** — template replication #3. With this,
+  every recurring-four cloud platform (Mind, Search, Mail, Clone) has
+  its healing reads; Chat has its aggregator; Translate its baseline;
+  Drops its fixed probe. **Every Class-C platform can now be READ by an
+  agent** (pending the Grant-gated deploys).
+- Clone's distinctive bits: run_selftest = the menu's EXACT spec —
+  resolve + price a DUMMY order through the provider registry (the
+  same decision path real order creation takes) + DB round-trip, NO
+  provider call / order row / purchase (proven by a before/after
+  order-count test). **get_config surfaces DEV_MODE explicitly** — in
+  prod that flag is an auth bypass and the first thing an agent should
+  check. Ring content-free by construction (never a clone name,
+  identity, audio metadata, raw provider text).
+- Manifest 3→6 tools; mutating gaps point at the windy-mind ops-hook
+  (#61) port. Proven: 5 new tests; 213 passed / 8 skipped; the 1
+  remaining failure (test_version_in_openapi_spec KeyError 'paths') is
+  PRE-EXISTING on Clone main (stash-verified) — ⚠️ flagged for a look.
+  Live 401-wall on real-auth boot (DEV_MODE=false). make check 69.
+- **🔴 GRANT-GATED:** Clone redeploy per deploy/SUBSTRATE.md.
+- **Fleet reads status: DONE. Remaining fleet work by category:**
+  (1) Grant-gated deploys/installs for everything shipped today;
+  (2) ops-hook ports (Search/Mail/Clone/Chat hosts) for the mutating
+  pair; (3) check_for_update wiring fleet-wide (Steamroller resolve);
+  (4) windy-admin's 3 reads; (5) Chat per-service mutation knobs;
+  (6) Word supervisor + resurrection (Class D, highest care, LAST);
+  (7) Mail's full canary-send (needs canary mailbox).
+
 ## 2026-07-13 (night) — GAP-CLOSING #6: Mail healing reads SHIPPED (privacy hard line, hardest platform)
 
 - **windy-mail #84 merged** — template replication #2. The Mail twist:
