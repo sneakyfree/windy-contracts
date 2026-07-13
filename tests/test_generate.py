@@ -329,3 +329,21 @@ def test_ops_contract_is_a_healing_surface(mind_woven: Path):
     # remote-only EPT: no token file reads leak into the client
     packet = emit_mcp_packet(m, MIND_WEAVE)
     assert "control.token" not in packet["src/client.js"]
+
+
+def test_search_procession_validates_and_weaves_cloud(tmp_path):
+    # Procession replication: Search is Class C like Mind — validates clean
+    # and weaves the remote http.js. No new mechanism, just a new manifest.
+    from loom.validate import validate_manifest
+
+    fx = ROOT / "schema" / "fixtures" / "windy-search" / "ops.mcp.v1.json"
+    m = json.loads(fx.read_text())
+    assert validate_manifest(m).ok
+    assert all("transport" in t for t in m["tools"])
+    wv = tmp_path / "weave.json"
+    wv.write_text(json.dumps(dict(MIND_WEAVE, product="windy-search",
+        http={"base_default": "https://api.windysearch.com", "base_env": "WINDY_SEARCH_API_URL"},
+        package={"name": "windy-search-mcp", "version": "0.0.0-loom-test"})))
+    out = tmp_path / "out"
+    weave(fx, wv, out)
+    assert (out / "mcp-packet" / "src" / "http.js").exists()  # cloud → remote entrypoint
