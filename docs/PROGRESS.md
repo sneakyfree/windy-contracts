@@ -5,6 +5,22 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — Fly native server: FULL Capability Plane (agent-host DONE)
+
+- **windy-agent #286: build_registry() now runs the real boot sequence** →
+  the native MCP server exposes ALL 46 of Fly's capabilities across 13
+  families (fs, shell, ssh, github, cloudflare, health/doctor, vision, skill,
+  fleet, agent, setup, windyword, mcp), not the 6-tool windyword subset.
+  Graceful fallback to minimal if substrate unavailable; WINDY_MCP_SERVER_
+  MINIMAL=1 forces subset. Band-gating intact. Opt-in entrypoint, not in boot.
+- Test isolated to temp db (WINDYFLY_DB_PATH), never touches real data. 441
+  mcp/boot/capability tests green.
+- **AGENT-HOST FULLY COMPLETE: Fly-as-patient (native server, whole registry,
+  #282+#286) + Fly-as-doctor (mcp.* client, #285).**
+- **All deferred infrastructure PRs now DONE.** Remaining = per-platform
+  gap-closing (Chat aggregator, cloud redeploy hooks, Translate /version+auth,
+  Word 8 baseline gaps) + cloud/code alignment + Grant-gated items.
+
 ## 2026-07-13 (night) — cloud discovery: /agent-surfaces (surfaces.json twin)
 
 - **windy-pro #234: GET /api/v1/identity/agent-surfaces** — the cloud-side
