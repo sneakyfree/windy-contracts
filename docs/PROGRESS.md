@@ -5,6 +5,30 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — GAP-CLOSING #6: Mail healing reads SHIPPED (privacy hard line, hardest platform)
+
+- **windy-mail #84 merged** — template replication #2. The Mail twist:
+  the ops ring is content-free BY CONSTRUCTION with the fleet's
+  strictest rule — NOTHING message-derived can enter (no addresses,
+  subjects, bodies, or raw Stalwart/Resend error text, which can echo
+  envelope data). Config view = pure booleans (Stalwart admin/JMAP, db,
+  redis, Eternitas, Pro, OAuth bridges, cloud archive).
+- run_selftest exercises the real infra legs (Stalwart admin, DB
+  round-trip, Redis ping) per-stage, 60s cache, `passed` envelope rule.
+  **HONEST SCOPE:** the menu's full canary (real message to a loopback
+  mailbox through the JMAP submit pipeline) needs a dedicated canary
+  mailbox — documented in the manifest as the follow-up, not half-built.
+- Auth: EPT or Pro JWT (identical citizens, Mail's own law). Manifest
+  4→7 tools; mutating gaps point at the windy-mind ops-hook (#61) port.
+- Proven: 7 new tests; full suite 583 passed / 33 skipped
+  (pre-existing), 0 regressions; live 401-wall on real-auth boot.
+  make check 69 green.
+- **🔴 GRANT-GATED:** Mail redeploy per DEPLOY.md.
+- **Next:** Clone (last of the recurring-four replications), then
+  windy-admin's three reads — after which every Class-C platform has
+  its healing reads and the remaining fleet work is mutating knobs
+  (ops-hook ports) + check_for_update wiring + Grant-gated deploys.
+
 ## 2026-07-13 (night) — GAP-CLOSING #5: Search healing reads SHIPPED (first template replication — fast + clean)
 
 - **windy-search #61 merged** — mechanical replication of the Mind

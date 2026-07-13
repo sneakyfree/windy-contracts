@@ -4,21 +4,21 @@
   "product": "windy-mail",
   "class": "cloud",
   "mcp_protocol": "2025-06-18",
-  "$comment": "Windy Mail ops surface — Class C (cloud). Clarifying finding: Mail's PRODUCT + ADMIN surface (webmail send/read, /api/v1/provision, account suspend/reinstate) stays OUT of this ops contract per §2 — same line Mind's /v1/chat and Search's /v1/search sit behind. Mail's account-admin mutations are product-domain business logic, not service-healing, so this remains a clean read-ops surface. Mail-specific value: /health already reports Stalwart (the mail server) + db + redis component status, so get_health natively carries the deliverability dimension. Reads bound via transport on https://mail.windymail.ai; EPT-gated.",
+  "$comment": "Windy Mail ops surface — Class C (cloud). Clarifying finding: Mail's PRODUCT + ADMIN surface (webmail send/read, /api/v1/provision, account suspend/reinstate) stays OUT of this ops contract per §2 — same line Mind's /v1/chat and Search's /v1/search sit behind. Mail's account-admin mutations are product-domain business logic, not service-healing, so this remains a clean read-ops surface. Mail-specific value: /health already reports Stalwart (the mail server) + db + redis component status, so get_health natively carries the deliverability dimension. Reads bound via transport on https://mail.windymail.ai; EPT-gated. Rev 2026-07-13 (gap-closing, replicating windy-mind #60 / windy-search #61): get_logs + get_config + run_selftest SHIPPED as the /ops/* trio (auth: EPT or Pro JWT — identical citizens, per Mail's own law). get_logs is content-free BY CONSTRUCTION with Mail's hardest line: NOTHING message-derived (addresses, subjects, bodies, raw Stalwart/Resend errors) can enter the ring — fixed event vocabulary only. run_selftest exercises the infra legs (Stalwart admin, real DB round-trip, real Redis ping) with a 60s-cached per-stage verdict using `passed` (invoke-envelope rule); the FULL canary — send a real message to a loopback mailbox through the JMAP submit pipeline — needs a dedicated canary mailbox and is the documented follow-up. Mutating gaps: port the windy-mind ops-hook (#61) pattern to the Mail EC2. DEPLOY STATUS: merged; live after the Grant-gated deploy — probe before trusting mid-incident.",
   "baseline_mapping": {
     "get_health": { "status": "implemented", "maps_to": "GET /health", "note": "component status incl. Stalwart mail server — the deliverability dimension." },
     "get_status": { "status": "implemented", "maps_to": "GET /version" },
     "get_capabilities": { "status": "implemented", "maps_to": "GET /health/ready", "note": "200 only when db + Stalwart + redis all healthy." },
-    "get_config": { "status": "gap", "note": "no config-read endpoint; Stalwart config is file/env at deploy." },
-    "get_logs": { "status": "gap", "note": "no content-free logs endpoint (privacy hard line: never expose mail bodies/subjects)." },
-    "run_selftest": { "status": "gap", "note": "the true mail selftest = send a canary to a loopback address and confirm acceptance + delivery; not built." },
+    "get_config": { "status": "implemented", "maps_to": "GET /ops/config", "note": "which legs are wired (Stalwart admin/JMAP, db, redis, Eternitas, Pro, OAuth bridges, cloud archive), secrets→booleans — closed 2026-07-13." },
+    "get_logs": { "status": "implemented", "maps_to": "GET /ops/logs", "note": "content-free ring, fixed vocabulary; nothing message-derived can enter — closed 2026-07-13." },
+    "run_selftest": { "status": "implemented", "maps_to": "POST /ops/selftest", "note": "infra legs (Stalwart/db/redis) per-stage, 60s cache — closed 2026-07-13. FOLLOW-UP: full canary send to a loopback mailbox needs a dedicated canary account." },
     "reconnect": { "status": "unsupported", "note": "components reconnect via their own pools; nothing agent-toggleable." },
-    "restart_app": { "status": "gap", "note": "out-of-band (systemd/Stalwart); ops plane outside the patient." },
+    "restart_app": { "status": "gap", "note": "out-of-band; port the windy-mind ops-hook (windy-mind #61 — out-of-patient systemd unit, bearer + confirm nonce) to the Mail EC2." },
     "enter_safe_mode": { "status": "unsupported", "note": "degraded-mode is reported by /health/ready, not toggled." },
     "exit_safe_mode": { "status": "unsupported" },
     "set_setting": { "status": "gap", "note": "no runtime-config mutation." },
     "check_for_update": { "status": "gap", "note": "wire to the Steamroller fleet version manifest (L2)." },
-    "apply_update": { "status": "gap", "note": "SSH-free health-gated redeploy hook; §7 (Actions billing-lock)." },
+    "apply_update": { "status": "gap", "note": "SSH-free health-gated redeploy; §7. The windy-mind ops-hook (#61: rebuild + last-good rollback + sha attestation) is the pattern to port." },
     "reset_to_defaults": { "status": "unsupported", "note": "NEVER — this service holds real mailboxes; a factory reset would destroy user mail." }
   },
   "tools": [
@@ -53,6 +53,61 @@
       "description": "Read system-wide Windy Mail statistics — how many accounts exist and how they break down by status (active, suspended, and so on). An admin-level diagnostic for 'is the mail system healthy at scale'. Counts only, never message content.",
       "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
       "transport": { "method": "GET", "path": "/api/v1/stats" }
+    },
+    {
+      "name": "get_logs",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "Read Windy Mail's recent operational events — server starts and self-test results by category. Content-free with Mail's hardest privacy line: the log can only ever hold fixed event names and category codes. No addresses, no subjects, no bodies, no raw mail-server errors — ever. Requires your passport or account token.",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "count": { "type": "number" },
+          "entries": { "type": "array", "description": "[{ts, level, event, code?}] — fixed vocabulary only" }
+        }
+      },
+      "transport": { "method": "GET", "path": "/ops/logs" }
+    },
+    {
+      "name": "get_config",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "Read Windy Mail's effective runtime configuration with every secret redacted to a boolean: which legs of the mail stack are actually wired — the Stalwart mail server (admin + JMAP), database, Redis, Eternitas passports, Pro identity, Gmail/Outlook OAuth bridges, and cloud archive. Use this when mail 'half works' — a missing leg shows up as a false. Requires your passport or account token.",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "environment": { "type": "string" },
+          "stalwart_admin_configured": { "type": "boolean" },
+          "stalwart_jmap_configured": { "type": "boolean" },
+          "database_configured": { "type": "boolean" },
+          "redis_configured": { "type": "boolean" },
+          "eternitas_configured": { "type": "boolean" },
+          "pro_identity_configured": { "type": "boolean" },
+          "oauth_gmail_configured": { "type": "boolean" },
+          "oauth_outlook_configured": { "type": "boolean" },
+          "cloud_archive_configured": { "type": "boolean" }
+        }
+      },
+      "transport": { "method": "GET", "path": "/ops/config" }
+    },
+    {
+      "name": "run_selftest",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "Actively exercise Windy Mail's infrastructure legs: reach the Stalwart mail server's admin endpoint, round-trip the database, and ping Redis — pass/fail per stage so you can see exactly which leg failed. Verdict cached 60 seconds. Note: this does not yet send a canary message end-to-end (that needs a dedicated canary mailbox — planned); pair with get_stats for traffic-level health. Requires your passport or account token.",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "passed": { "type": "boolean", "description": "true only when every stage passed ('passed', not 'ok' — top-level ok is reserved for the invoke envelope)" },
+          "stages": { "type": "array", "description": "[{name: stalwart|db|redis, ok, detail}]" },
+          "duration_ms": { "type": "number" },
+          "cached": { "type": "boolean" }
+        }
+      },
+      "transport": { "method": "POST", "path": "/ops/selftest" }
     }
   ]
 }
