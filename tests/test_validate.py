@@ -25,11 +25,26 @@ def _load(name: str) -> dict:
 # ── first citizens ──────────────────────────────────────────────────
 
 
-def test_talk_control_rev6_validates_as_is():
+def test_talk_control_validates_as_is():
     r = validate_manifest(_load("control.mcp.v1.json"), path="control.mcp.v1.json")
     assert r.ok, r.errors
-    # Frozen at 24 tools, five adversarial rounds — the floor holds.
-    assert len(_load("control.mcp.v1.json")["tools"]) == 24
+    # rev.8: grew from rev.6's 24 to 28 (account/billing knobs added by the
+    # Talk lane's doctrine-compliance pass, PR #55). The floor only rises.
+    assert len(_load("control.mcp.v1.json")["tools"]) >= 24
+
+
+def test_talk_control_is_fully_compliant_zero_warnings():
+    # Talk is the gold-standard reference: it added doctrine/product/class
+    # headers, returns schemas, and closed its baseline → 0 errors, 0 warnings.
+    r = validate_manifest(_load("control.mcp.v1.json"))
+    assert r.ok and not r.warnings, r.warnings
+
+
+def test_talk_engine_surface_validates():
+    # The engine-box healing surface (engine.mcp.v1) the Talk lane built —
+    # heal a wedged 5090 engine box (ADR-060 §7 D9.8 ops slot).
+    r = validate_manifest(_load("engine.mcp.v1.json"), path="engine.mcp.v1.json")
+    assert r.ok, r.errors
 
 
 def test_talk_hands_v1_validates_as_is():
@@ -37,8 +52,15 @@ def test_talk_hands_v1_validates_as_is():
     assert r.ok, r.errors
 
 
-def test_talk_control_gets_migration_warnings_not_errors():
-    r = validate_manifest(_load("control.mcp.v1.json"))
+def test_missing_headers_warn_not_error():
+    # The v1→v2 migration ramp: a manifest lacking doctrine/product/class
+    # gets WARNINGS, not errors. (Talk itself has since added all three — see
+    # test_talk_control_is_fully_compliant_zero_warnings — so we test the
+    # behavior on a header-less minimal manifest.)
+    m = _minimal()
+    m.pop("doctrine", None); m.pop("product", None); m.pop("class", None)
+    r = validate_manifest(m)
+    assert r.ok  # warnings, not errors
     joined = " ".join(r.warnings)
     for header in ("doctrine", "product", "class"):
         assert f"missing '{header}'" in joined

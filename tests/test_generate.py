@@ -68,7 +68,7 @@ def test_desktop_packet_has_no_http_entrypoint(woven: Path):
 def test_packet_manifest_is_byte_faithful(woven: Path):
     embedded = json.loads((woven / "mcp-packet" / "manifest.json").read_text())
     assert embedded == _manifest()
-    assert len(embedded["tools"]) == 24  # Talk's frozen floor
+    assert len(embedded["tools"]) == len(_manifest()["tools"])  # byte-faithful to source
 
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="node not on PATH")
@@ -99,7 +99,7 @@ def test_twin_registers_every_tool_with_band_floors(woven: Path):
         # every entry line carries its band
         line = next(l for l in src.splitlines() if f'_cap(registry, "{t["name"]}"' in l)
         assert f'band="{expected_band}"' in line
-    assert "TOOL_COUNT = 24" in src
+    assert f"TOOL_COUNT = {len(_manifest()['tools'])}" in src
 
 
 def test_deterministic_weave(tmp_path):
