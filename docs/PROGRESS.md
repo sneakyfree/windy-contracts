@@ -5,6 +5,22 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (evening) — procession: Windy Mail (Class C, first band_floor)
+
+- **Second procession platform** (windy-contracts #10 + windy-mail #83). Mail
+  ops.mcp.v1: 4 read routes on mail.windymail.ai (health incl. Stalwart =
+  deliverability dimension, version, ready, stats). Canonical in
+  windy-mail/contracts/.
+- **Clarifying finding (not a wrinkle):** Mail's account mutations
+  (suspend/reinstate/provision) + webmail are product/admin domain → stay out
+  per §2 (same line as Mind /v1/chat, Search /v1/search). Reinforces where
+  §2 sits. Mail = clean read-ops.
+- **First per-tool band_floor:** get_stats = TRUSTED (admin-read); verified it
+  rides into the woven Python twin. Trust-algebra caller-band axis exercised.
+- make check green (53, 7 fixtures). Retrofit map: Word=D, Talk=D, Mind=C,
+  Search=C, Mail=C, Fly=A.
+- **Next: continue procession — Chat, Clone, Drops, Translate, admin remain.**
+
 ## 2026-07-13 (evening) — procession begins: Windy Search (Class C replication)
 
 - **First fleet-procession platform** (windy-contracts #9 + windy-search #60).
