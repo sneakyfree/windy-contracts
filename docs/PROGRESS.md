@@ -5,6 +5,23 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (evening) — procession begins: Windy Search (Class C replication)
+
+- **First fleet-procession platform** (windy-contracts #9 + windy-search #60).
+  Pure replication of the Mind Class C pattern — NO new Loom mechanism, just a
+  new manifest. Search ops.mcp.v1: 5 real read routes on api.windysearch.com
+  (health, version, ready=capabilities, whoami, integrity-budget); product
+  API (/v1/search,/fetch,/extract) stays out per §2. Canonical in
+  windy-search/contracts/.
+- baseline_mapping now exercises `unsupported` (stateless service:
+  reconnect/safe-mode/reset) vs `gap` (config/logs/redeploy) — the validator
+  warns only on gaps. Weaves remote http.js; all JS node-checks. make check
+  green (52 tests, 6 fixtures).
+- **Procession cadence proven fast:** validate → weave → node-check → place.
+  Remaining fleet: Mail, Chat, Clone, Drops, Translate, admin — same recipe.
+- **Next: continue procession (Mail = high value, or another) OR a deferred
+  careful PR OR cloud/code alignment when sibling done.**
+
 ## 2026-07-13 (evening) — L2: the Steamroller + discovery ("land on a box")
 
 - **The update-percolation half is built** (windy-contracts #8, ADR-060 §5 +
