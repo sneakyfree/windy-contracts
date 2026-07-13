@@ -5,6 +5,22 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — Talk lane DONE + canon fixtures refreshed
+
+- **windy-talk lane FINISHED its whole punch list** (windytalk PR #55, handoff
+  items 1-7): engine-box surface (engine.mcp.v1, 14 tools), account/billing
+  knobs (control 24→28, rev.8), surfaces.json + weave.json, canonical POST
+  /invoke, Loom validation in its gate. Clean tree, on master, deployed?=Grant.
+- **Talk = GOLD STANDARD:** its 3 contracts validate 0 errors + 0 WARNINGS
+  against the evolved (post-H2/H3) doctrine — the only platform at zero
+  warnings. No trust-vocab conflict (no band_floor use).
+- **Canon hygiene (windy-contracts #23):** refreshed the stale rev.6
+  first-citizen fixtures → rev.8 (control 28-tool) + added engine.mcp.v1
+  fixture. Tests updated (floor 'only rises', zero-warnings pin, engine
+  validate, generator count-agnostic). make check 69.
+- **Talk needs NOTHING further** (no follow-up prompt, no SSH pass) — release
+  the terminal; only Grant-gated deploy remains.
+
 ## 2026-07-13 (night) — GAP-CLOSING #4a: Mind healing reads SHIPPED (observable → half-healable)
 
 - **Platform taken: windy-mind** (the recurring cloud four, Mind first —
