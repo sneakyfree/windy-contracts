@@ -5,6 +5,31 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (afternoon) — L3 Class A: Fly retrofit — THE CLASS TRIAD IS COMPLETE
+
+- **Loom learns Class A** (windy-contracts #7 + windy-agent #282). Fly's
+  control surface is its in-process Capability Plane, so agent-host uses a
+  NATIVE MCP server (a woven proxy would HTTP-hop to itself). Loom now:
+  `server: native` → validate + emit ONLY the conformance driver; baseline
+  tracked via `baseline_mapping` (role→cap id+status) not tool names;
+  dotted capability names allowed; weave http/auth/package required only for
+  woven servers.
+- **windy-agent native server shipped** (opt-in, isolated, NOT in boot):
+  `src/windyfly/mcp_server/` — pure bridge (tools/list = band-filtered
+  registry, tools/call = registry.invoke; band-gating+audit free) + stdio
+  entrypoint `windy-mcp-server`; `mcp` = optional dep. 8 tests vs Fly's real
+  windyword.* caps. Canonical manifest in windy-agent/contracts/.
+- **Diagnostic:** Fly rich in agent caps, has 8 healing-baseline gaps (with
+  notes). Punch list `docs/handoffs/FLY-LANE-2026-07-13.md` incl. the big
+  one: the `mcp.*` CLIENT (Fly-as-doctor, Route C) as its own security PR.
+- make check green (41 tests, all 4 fixtures validate).
+- **🎯 The Loom has now met all 3 classes: D (stdio+token), C (remote-http+
+  EPT), A (native).** Every remaining platform is replication, not new
+  mechanism — validating the "free re-weave" plan. **Next: L2 (Steamroller +
+  account-server EPT discovery) OR the fleet procession (Mail/Chat/Clone/
+  Search/Drops etc., each = author manifest→weave→prove→punch list→place) OR
+  cloud/code alignment when sibling done.**
+
 ## 2026-07-13 (midday) — L3 Class C: Mind retrofit (Loom learns remote transport)
 
 - **Loom now speaks Class C** (windy-contracts #6 + windy-mind #59). cloud
