@@ -160,3 +160,21 @@ def test_conformance_suite_parses():
         (Path(__file__).resolve().parent.parent / "conformance" / "mcp-conformance.v1.json").read_text()
     )
     assert conf["cases"], "conformance suite must carry cases"
+
+
+def test_class_a_baseline_via_mapping():
+    # agent-host: baseline coverage is declared in baseline_mapping (role ->
+    # real capability id + status), not by static tool names.
+    m = _load("../windy-agent/control.mcp.v1.json") if False else None
+    from pathlib import Path
+    import json as _j
+    fp = Path(__file__).resolve().parent.parent / "schema" / "fixtures" / "windy-agent" / "control.mcp.v1.json"
+    m = _j.loads(fp.read_text())
+    r = validate_manifest(m)
+    assert r.ok, r.errors
+    gaps = [w for w in r.warnings if w.startswith("baseline gap:")]
+    # Fly has real gaps (restart, safe-mode, apply_update, ...) surfaced with notes
+    assert any("apply_update" in w for w in gaps)
+    assert any("restart_app" in w for w in gaps)
+    # and NO opaque "absent" warnings (those are the tool-name path)
+    assert not any("absent (ADR-060" in w for w in r.warnings)

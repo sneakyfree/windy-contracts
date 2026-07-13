@@ -476,7 +476,10 @@ def register_{module}_capabilities(
 
 def emit_conformance_driver(manifest: dict, weave: dict) -> str:
     product = weave["product"]
-    base_env = weave["http"].get("base_env", "WINDY_CONTROL_URL")
+    http = weave.get("http") or {}
+    base_env = http.get("base_env", "WINDY_CONTROL_URL")
+    base_default = http.get("base_default", "")
+    native = weave.get("server") == "native"
     return f'''"""{_GENERATED_BANNER}
 
 Conformance driver for {product} ({manifest["contract"]}) — ADR-060 §3.7.
@@ -520,8 +523,17 @@ def static_gate(source_manifest: Path, packet_manifest: Path) -> None:
     print(f"conformance static OK: {{len(tools)}} tools, packet manifest byte-identical")
 
 
+NATIVE = {native!r}
+
+
 def live_gate() -> None:
-    base = os.environ.get({json.dumps(base_env)}, {json.dumps(weave["http"]["base_default"])}).rstrip("/")
+    if NATIVE:
+        # Class A: no HTTP surface. The registry<->MCP parity gate lives in
+        # the platform repo's own tests (it needs the in-process registry) —
+        # e.g. windy-agent tests/test_mcp_control_bridge.py.
+        print("conformance live SKIPPED (native server — parity checked by the platform's own registry tests)")
+        return
+    base = os.environ.get({json.dumps(base_env)}, {json.dumps(base_default)}).rstrip("/")
     manifest = json.loads((Path(__file__).parent / "manifest.json").read_text())
     try:
         with urllib.request.urlopen(f"{{base}}/tools", timeout=5) as r:
@@ -568,19 +580,26 @@ def weave(manifest_path: Path, weave_path: Path, outdir: Path) -> list[str]:
         raise ValueError(f"weave config invalid: {weave_errors}")
 
     written: list[str] = []
+    native = weave_cfg.get("server") == "native"
 
-    packet = emit_mcp_packet(manifest, weave_cfg)
-    for rel, content in packet.items():
-        p = outdir / "mcp-packet" / rel
-        p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(content)
-        written.append(str(p.relative_to(outdir)))
+    # Class A (native server): the platform implements its own MCP server over
+    # an in-process registry — a woven JS proxy would HTTP-hop to itself. The
+    # Loom validates the manifest and emits only the conformance driver; the
+    # server + twin are hand-written native code in the platform repo.
+    if not native:
+        packet = emit_mcp_packet(manifest, weave_cfg)
+        for rel, content in packet.items():
+            p = outdir / "mcp-packet" / rel
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(content)
+            written.append(str(p.relative_to(outdir)))
 
-    module = weave_cfg.get("python_module", weave_cfg["product"].replace("-", "_"))
-    twin = outdir / f"{module}_twin.py"
-    twin.write_text(emit_python_twin(manifest, weave_cfg))
-    written.append(twin.name)
+        module = weave_cfg.get("python_module", weave_cfg["product"].replace("-", "_"))
+        twin = outdir / f"{module}_twin.py"
+        twin.write_text(emit_python_twin(manifest, weave_cfg))
+        written.append(twin.name)
 
+    outdir.mkdir(parents=True, exist_ok=True)
     driver = outdir / "conformance_driver.py"
     driver.write_text(emit_conformance_driver(manifest, weave_cfg))
     written.append(driver.name)
@@ -590,7 +609,7 @@ def weave(manifest_path: Path, weave_path: Path, outdir: Path) -> list[str]:
     src_copy.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
     written.append(src_copy.name)
     driver_manifest = outdir / "manifest.json"
-    driver_manifest.write_text((outdir / "mcp-packet" / "manifest.json").read_text())
+    driver_manifest.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
     written.append(driver_manifest.name)
 
     return written
