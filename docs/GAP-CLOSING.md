@@ -49,7 +49,7 @@ shim behind the platform's TLS proxy at `/mcp`.
 | **windy-search** | `~/windy-search` | the recurring four | `run_selftest` = canary search per source; cleanest leaf. |
 | **windy-mail** | `~/windy-mail` | the recurring four | `run_selftest` = canary send to loopback; `get_logs` MUST scrub mail. |
 | **windy-clone** | `~/Windy-Clone` | the recurring four | `run_selftest` = resolve+price a dummy order (no purchase). |
-| **windy-registry** (Drops) | `~/windy-registry` | the recurring four | 🔴 **LIVE: `/health/full` reports `r2_bucket: http 404` in production** — investigate first (bundle storage). Brand=Drops, service=windy-registry. |
+| **windy-registry** (Drops) | `~/windy-registry` | the recurring four (minus the solved probe) | ✅ **R2-404 SOLVED 2026-07-13 (#26): FALSE ALARM** — bucket was healthy all along (bundle downloads sha256-verified); the probe HEAD'd the domain root, which R2 public buckets 404 by design. Probe now HEADs the newest real bundle; r2 joins the overall verdict. 🔴 Grant-gated image rebuild to deploy. Brand=Drops, service=windy-registry. |
 | **windy-translate** | `~/windy-pro/services/translate-api` | ✅ **baseline SHIPPED 2026-07-13** (windy-pro #235 + windy-contracts #20): /version (MF1) + opt-in token wall (install_token, not EPT — loopback internal svc) + /ops/logs + /ops/selftest, re-woven to 6 tools. 🔴 Grant-gated: service restart (+ optional WINDY_TRANSLATE_TOKEN env to arm the wall). Remaining: get_config, set_setting, restart_app, check/apply_update | ⚠️ Envelope rule from this retrofit: tool payloads must not use top-level `ok` (reserved by the invoke envelope) — use `passed` etc. |
 | **windy-admin** | `~/windy-admin` | get_config, get_logs, run_selftest | Fleet-version PUBLISHER already DONE (`/v1/fleet-versions`). |
 
@@ -78,7 +78,7 @@ shim behind the platform's TLS proxy at `/mcp`.
 
 1. ~~**windy-chat aggregator**~~ ✅ DONE 2026-07-13 (#143/#144/windy-contracts #17; Grant-gated deploy pending).
 2. ~~**windy-translate `/version`**~~ ✅ DONE 2026-07-13 (windy-pro #235 + windy-contracts #20; Grant-gated restart pending).
-3. **windy-registry R2-404** — a real live production degradation (investigate, may not be a code change).
+3. ~~**windy-registry R2-404**~~ ✅ SOLVED 2026-07-13 (#26): false alarm — probe design, fixed; Grant-gated rebuild pending.
 4. The recurring cloud four, one platform at a time (Mind first — it's the template the others copy).
 5. **windy-word supervisor + resurrection** — highest value, highest care (dangerous file); do last / with most caution.
 
