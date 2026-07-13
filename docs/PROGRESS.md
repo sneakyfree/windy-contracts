@@ -5,6 +5,30 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (morning) — L3 begins: Word retrofit (first Gen-1 weave)
+
+- **Loom gains Gen-1 `transport` bindings** (windy-contracts #5) — per-tool
+  method+path so a hardened surface (Word :18765, 104 bespoke REST routes)
+  is woven WITHOUT rewriting main.js. Client route table (GET→query /
+  POST→body / none) + Python twin `_ROUTES`. Greenfield still defaults to
+  `/invoke`. `baseline_status` + `transport` added to manifest schema.
+- **Word manifest authored** (13 real transport-bound routes: implemented
+  baseline + proven sound/settings) — canonical copy now in
+  `windy-pro/contracts/control.mcp.v1.json` + weave.json (PR #232, contract
+  files only, main.js untouched).
+- **Proven end-to-end:** real MCP client → woven Word packet → mock surface;
+  GET/query, POST/body, POST/none all dispatched with bearer token.
+- **Diagnostic:** Word rich in features, poor in healing baseline — 8 of 13
+  baseline knobs are GAPS (not advertised; a 404-ing apply_update mid-
+  incident is worse than omission). Punch list:
+  `docs/handoffs/WORD-LANE-2026-07-13.md`, matches §7.
+- make check green (32 tests). Talk lane working its handoff in parallel;
+  cloud/code still the sibling lane's (untouched).
+- **Next:** L2 (Steamroller version-manifest + account-server EPT query;
+  surfaces.json schema already pinned) OR next reference retrofit (Fly =
+  Class A, or Mind = Class C) OR morning cloud/code alignment when that
+  lane finishes. Word full-parity enumeration = batched follow-up.
+
 ## 2026-07-13 (night) — L1 part 2 shipped: THE LOOM WEAVES
 
 - **`loom/generate.py` live** — one manifest + one weave config →
