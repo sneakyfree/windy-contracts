@@ -5,6 +5,23 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — Steamroller CLOSED-LOOP: fleet-version publisher
+
+- **windy-admin #25: GET /v1/fleet-versions publisher** — the SENDING half's
+  SoT, the last core Steamroller piece. /dashboard/fleet=DEPLOYED;
+  /v1/fleet-versions=SHOULD-BE-INSTALLED. Data in app/data/fleet_versions.json
+  (ops-maintained, force-added past data/ ignore), Pydantic-validated to
+  fleet-version.v1 (no new dep). Public + content-free (+ secret tripwire
+  test). Seeded: windy-word npm 1.11.0, windy-registry 0.1.0.
+- **Proven E2E across both repos:** admin publisher output → windy-contracts
+  loom/discovery.reconcile() → real must-update verdict + literal remediation
+  npx windy-word-mcp@1.11.0. The Steamroller is now closed-loop.
+- 6 new tests; full admin suite 134 passed, no regress.
+- **Remaining deferred: account-server EPT discovery query; Fly native-server
+  boot-wiring (build_registry full ctx); per-platform gap-closing (Chat
+  aggregator, redeploy hooks, Translate /version+auth, Word 8 baseline gaps);
+  cloud/code alignment; Grant-gated (npm publish, deploys, R2-404 finding).**
+
 ## 2026-07-13 (night) — 🔑 Fly-as-doctor: the mcp.* client (loop closed)
 
 - **windy-agent #285 merged: the mcp.* client** — Fly can now DRIVE every
