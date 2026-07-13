@@ -5,6 +5,32 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — L1 part 2 shipped: THE LOOM WEAVES
+
+- **`loom/generate.py` live** — one manifest + one weave config →
+  (1) MCP packet (windy-word-mcp 3-file skeleton, low-level SDK,
+  embedded byte-identical manifest, every tool proxying `POST /invoke`),
+  (2) Python twin (windy-agent Capability registrations, band floors from
+  the mapping table), (3) conformance driver (static byte-parity gate +
+  live GET /tools parity gate). Deterministic output — regenerate-and-diff
+  is itself a drift gate. Refuses to weave an invalid manifest.
+- `schema/weave-config.v1.schema.json` pinned (product/class/http/auth/
+  package; auth kinds: install_token | ept per ADR-060 §3.3).
+- **Smoke-proven end-to-end:** wove Talk rev.6 → `npm install` → booted
+  the packet → real MCP over stdio: initialize handshake OK, 24 tools
+  listed, tools/call returns graceful isError when the surface is down,
+  unknown tools rejected.
+- `make check` green: 27 tests (16 validator + 11 generator incl.
+  node --check, determinism, drift-catch, EPT variant).
+- **LANE BOUNDARY (Grant, tonight):** a sibling Fable lane is building
+  windy-cloud + windy-code MCPs — DO NOT TOUCH those repos. Morning task:
+  align its output with ADR-060 (validate its contracts with the Loom,
+  check trust algebra / remote transport / baseline / doctor triad),
+  report deltas to Grant before changing anything.
+- **Next:** L2 (Steamroller + surfaces.json + account-server EPT query)
+  or L3 reference retrofit on a safe repo (Word/Fly/Mind/Search — NOT
+  cloud/code).
+
 ## 2026-07-13 (later) — ADR-060 IS LAW; L1 part 1 shipped
 
 - **PR #1 merged on Grant's word — the doctrine is law.**

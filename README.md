@@ -13,7 +13,7 @@ enforces law:
 | Band ↔ EI trust-mapping table (ADR-060 §3.5) | `schema/band-ei-mapping.v1.json` | **v1 pinned** |
 | Shared conformance suite (extracted from windytalk @ `9360058`) | `conformance/mcp-conformance.v1.json` | **extracted** — per-platform drivers come with L3 |
 | The Loom (`loom/`): validator | `uv run python -m loom.validate <manifest>` | **live** — `make check` gates it |
-| The Loom: generator (manifest → MCP packet + Python twin + HTTP skeleton) | `loom/` | next — L1 part 2 |
+| The Loom: generator (manifest → MCP packet + Python twin + conformance driver) | `uv run python -m loom.generate <manifest> <weave.json> <outdir>` | **live** — smoke-proven: woven packet speaks real MCP |
 | `surfaces.json` discovery-registry schema | `schema/surfaces/` | L2 |
 | Provenance / superseded drafts | `docs/archive/` | quarantined — banners name ADR-060 as canon |
 

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sneakyfree/windy-contracts/schema/weave-config.v1.schema.json",
+  "title": "Loom weave config, v1",
+  "$comment": "Per-platform knobs the generator needs beyond the manifest itself: where the native HTTP surface lives, how callers authenticate (ADR-060 §3.3 by class), and what the npm packet is called. Lives in each platform repo next to its manifest (contracts/weave.json).",
+  "type": "object",
+  "required": ["product", "class", "http", "auth", "package"],
+  "properties": {
+    "product": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "class": { "type": "string", "enum": ["desktop", "cloud", "agent-host"] },
+    "http": {
+      "type": "object",
+      "required": ["base_default"],
+      "properties": {
+        "base_default": { "type": "string", "$comment": "e.g. http://127.0.0.1:8782 (desktop) or https://api.windymind.ai (cloud)" },
+        "base_env": { "type": "string", "$comment": "env var that overrides base_default, e.g. WINDY_TALK_CONTROL_URL" }
+      },
+      "additionalProperties": false
+    },
+    "auth": {
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["install_token", "ept"] },
+        "token_path_default": { "type": "string", "$comment": "install_token only: well-known 0600 path, e.g. ~/.windytalk/control.token" },
+        "token_env": { "type": "string", "$comment": "env var carrying the raw token (overrides the file)" },
+        "token_path_env": { "type": "string", "$comment": "env var overriding the token file path" }
+      },
+      "additionalProperties": false
+    },
+    "package": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "$comment": "npm packet name, e.g. windy-talk-mcp" },
+        "version": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "python_module": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "$comment": "Name for the generated Python twin module; defaults to product with dashes → underscores."
+    }
+  },
+  "additionalProperties": false
+}
