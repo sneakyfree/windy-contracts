@@ -368,3 +368,21 @@ def test_mail_procession_validates_and_weaves_cloud(tmp_path):
     # the TRUSTED band floor rides into the generated Python twin
     twin = (out / "windy_mail_twin.py").read_text()
     assert "TRUSTED" in twin
+
+
+def test_chat_procession_multiservice(tmp_path):
+    # Chat is a multi-service constellation: honest thin surface (Synapse core
+    # only) with the fleet-health aggregator as the headline gap.
+    from loom.validate import validate_manifest
+    fx = ROOT / "schema" / "fixtures" / "windy-chat" / "ops.mcp.v1.json"
+    m = json.loads(fx.read_text())
+    assert validate_manifest(m).ok
+    assert len(m["tools"]) == 1  # only Synapse liveness is externally reachable
+    assert "$headline_gap" in m and "aggregator" in m["$headline_gap"]
+    wv = tmp_path / "weave.json"
+    wv.write_text(json.dumps(dict(MIND_WEAVE, product="windy-chat",
+        http={"base_default": "https://chat.windychat.ai", "base_env": "WINDY_CHAT_API_URL"},
+        package={"name": "windy-chat-mcp", "version": "0.0.0-loom-test"})))
+    out = tmp_path / "out"
+    weave(fx, wv, out)
+    assert (out / "mcp-packet" / "src" / "http.js").exists()
