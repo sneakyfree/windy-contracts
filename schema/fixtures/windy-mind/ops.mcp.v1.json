@@ -17,7 +17,7 @@
     "enter_safe_mode": { "status": "unsupported" },
     "exit_safe_mode": { "status": "unsupported" },
     "set_setting": { "status": "gap", "note": "STAGED 2026-07-13: ops-hook POST /hook/config built — ALLOWLISTED provider keys + LOG_LEVEL only, atomic .env edit w/ backup, recreate (not restart — compose restart skips env_file), health-gate, auto-restore on failed gate. always_confirm via single-use nonce. Live after the Grant-gated install." },
-    "check_for_update": { "status": "gap", "note": "resolve /version against the Steamroller's /v1/fleet-versions (live on admin)." },
+    "check_for_update": { "status": "implemented", "maps_to": "GET /ops/check-update", "note": "resolves the running version against admin's /v1/fleet-versions; returns status + literal remediation (apply_update). Closed 2026-07-13." },
     "apply_update": { "status": "gap", "note": "STAGED 2026-07-13 (§7 urgent): ops-hook POST /hook/redeploy built — tag last-good → rebuild from tree → up → migrations → health-gate (+ optional expected_commit_sha attestation) → ROLLBACK to last-good on failed gate. v1 = rebuild-in-place (code pull to host stays rsync until a host git credential is granted). always_confirm via single-use nonce. Live after the Grant-gated install (unit + Caddy route + WINDY_MIND_IMAGE_REF verified on-host)." },
     "reset_to_defaults": { "status": "unsupported", "note": "config is env + DB-backed keys; a factory reset has no meaning for a stateless broker." }
   },
@@ -131,6 +131,24 @@
         }
       },
       "transport": { "method": "POST", "path": "/ops/selftest" }
+    },
+    {
+      "name": "check_for_update",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "Check whether a newer Windy Mind build is available. Resolves the version running right now against the fleet's version manifest and reports one of: current (you're up to date), update-available (a newer build exists — the notes say what it fixes), or must-update (you're below the minimum supported version — an agent should push, not merely offer). When an update exists it hands back the literal next step. Read-only — it never deploys anything; applying the update is the separate, always-confirm apply_update.",
+      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "description": "current | update-available | must-update | unknown" },
+          "installed": { "type": "string" },
+          "current": { "type": "string" },
+          "notes": { "type": "string", "description": "grandma-English 'what this fixes' — read aloud when offering" },
+          "remediation": { "type": "string", "description": "the literal next step when an update exists" }
+        }
+      },
+      "transport": { "method": "GET", "path": "/ops/check-update" }
     }
   ]
 }

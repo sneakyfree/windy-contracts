@@ -5,6 +5,34 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — GAP-CLOSING #11: check_for_update — Steamroller RECEIVING half wired (Mind template)
+
+- **windy-admin #28: seeded the 7 cloud services** into the fleet-version
+  manifest (/v1/fleet-versions) — mind/search/mail/clone/admin/chat/translate
+  (kind=image, current=running version). The SENDING half now covers the whole
+  Class-C fleet; current==running today so every check reads "current" (the
+  value is the wiring — bump a `current` → that platform's check lights up).
+- **windy-mind #62: check_for_update TEMPLATE.** GET /ops/check-update fetches
+  admin's manifest, finds the product's stable channel, compares running
+  __version__ using the SAME semver-lenient logic as the canon
+  (loom/discovery.py) so the fleet agrees on "newer". Returns status
+  (current | update-available | must-update | unknown) + fix notes + the
+  LITERAL remediation (call apply_update = the ops-hook redeploy,
+  always_confirm) when an update exists. Read-only; EPT/JWT-gated. Fleet
+  URL/product/channel are settings (default https://admin.windyword.ai/
+  v1/fleet-versions). Manifest 8→9 tools; coverage-sentinel pin updated.
+- **Steamroller now CLOSED-LOOP for cloud:** admin publishes → platform
+  check_for_update resolves → remediation points at apply_update (ops-hook).
+  All three §5 pieces meet.
+- Proven: 5 new Mind tests (all statuses + honest-unreachable + auth); Mind
+  suite 408; make check 82.
+- **🔴 GRANT-GATED:** Mind redeploy (manifest is already live at admin).
+- **Replication (mechanical — same helper, product name = the only change):**
+  Search/Mail/Clone/admin/Chat/Translate each get the identical
+  /ops/check-update + a fleet_product setting + manifest tool. Next.
+
+
+
 ## 2026-07-13 (night) — GAP-CLOSING #10: ops-hook vendored to the WHOLE Class-C fleet + build|pull mode
 
 - **Canon gained OPS_HOOK_BUILD_MODE** (windy-contracts #30): build (rebuild
