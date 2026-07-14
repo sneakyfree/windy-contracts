@@ -5,6 +5,21 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-14 — ADR-062 ratified + ADR-063 rehab: trust model design COMPLETE
+
+- **windy-contracts #36.** ADR-062 §9 ratified (compromise inform-once;
+  vouch-accountability commons-only; rehab in tandem) + ADR-063 NEW.
+- **ADR-063 integrity rehabilitation** — 'no life sentence for a bad
+  afternoon': (1) penalize HARM DONE not INTENT ATTEMPTED (blocked misheard
+  attempt = tiny ding, not cliff — dissolves most unjust dips at source);
+  (2) recovery curve (event-contribution time-decay + earn-back; fraud slowest
+  / reliability fastest; no permanent scar; revocation separate); misunder-
+  standing fast-path wired to 062 prompt (owner-attested, logged to standing,
+  discounts-not-erases, rate-limited); transparent recovery projection.
+- **062+063 interlock = the complete emotional promise: never homeless +
+  never exiled forever.** Both ACCEPTED design; build gated Eternitas-side
+  (arms-length). AGENT_CONTROL §3.5 points to both.
+
 ## 2026-07-14 — ADR-062 v1.1: root means root (Grant directive)
 
 - **windy-contracts #35.** Grant's values line canonized: Eternitas protects
