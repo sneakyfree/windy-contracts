@@ -5,6 +5,41 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-14 — GAP-CLOSING #14: Mind ops-hook→canon swap + WORD's first Class-D baseline knob (get_logs)
+
+- **windy-mind #63: bespoke ops-hook → vendored canon.** Mind was the DONOR
+  (#61, bespoke WINDY_MIND_* + 12 tests); now vendors the generic OPS_HOOK_*
+  canon byte-identical like every host (drift test in the api gate). Config
+  moved to the unit env; MIGRATE_CMD=alembic upgrade head carried over. Gains
+  per-service restart for free. **The whole fleet now runs the IDENTICAL
+  hook.**
+- **windy-pro #237: WORD get_logs — first of the 8 Class-D baseline gaps**
+  (WORD-LANE handoff order: read-only, lowest risk, first). ⚠️ TOUCHED main.js
+  (the most dangerous file) but PURELY ADDITIVELY: one read-only route
+  GET /control/logs after the token wall, calling logger.readRecent() —
+  NOTHING in recording/paste/Wayland/focus. node --check clean.
+  logger.readRecent returns ONLY {ts,level,component,event}, DROPS every
+  record's `data` — content-free by construction (planted transcript/token/
+  body never surface; 4 tests prove it). Manifest 13→14 tools; Word test
+  test_word_baseline_gaps updated (get_logs graduated gap→implemented, 7 gaps
+  remain).
+  - **Two adjacent pre-existing fixes:** logger WINDY_LOG_DIR override (fixes a
+    macOS-only test-isolation flake — darwin/win log path ignored $HOME/$XDG;
+    green on CI but flaky locally) + jest.config excludes services/translate-api
+    (its node:test suite was mis-run by root jest since the translate ops work).
+  - logger + control-auth 25/25 stable; the 2 remaining root-jest failures
+    (installer bundled-assets/model-integrity) are PRE-EXISTING (need bundled
+    model tarballs absent in dev; verified fail without this change).
+- make check 87. 🔴 Grant-gated: Word desktop rebuild ships the route; Mind
+  ops-hook install.
+- **WORD REMAINING (WORD-LANE punch list):** 7 baseline gaps (run_selftest,
+  get_capabilities, reconnect, enter/exit_safe_mode, apply_update,
+  reset_to_defaults) + the SUPERVISOR + OS resurrection (§3.6, the biggest
+  item) + GET /tools + full ~90-route parity enumeration + surfaces.json.
+- **Next:** more Word baseline knobs (get_capabilities / run_selftest are the
+  next-safest reads), OR the Word supervisor (biggest, most care), OR Mail
+  canary-mailbox selftest.
+
 ## 2026-07-13 (night) — GAP-CLOSING #13: ops-hook v2.1 per-service restart + Chat's first hook (multi-service reconnect)
 
 - **Canon v2.1 (windy-contracts #33):** OPS_HOOK_SERVICES allowlist →

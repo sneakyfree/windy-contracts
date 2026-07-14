@@ -216,10 +216,13 @@ def test_word_twin_carries_the_route_table(word_woven: Path):
 
 
 def test_word_baseline_gaps_are_not_advertised():
-    # The 8 gap knobs must NOT appear as callable tools — a packet that offers
-    # apply_update and 404s mid-incident is worse than one that omits it.
+    # The remaining gap knobs must NOT appear as callable tools — a packet that
+    # offers apply_update and 404s mid-incident is worse than one that omits it.
+    # (get_logs graduated gap→implemented 2026-07-13, windy-pro #237: it's now
+    # a real route, GET /control/logs, so it IS advertised.)
     names = {t["name"] for t in _word_manifest()["tools"]}
-    for gap in ("get_logs", "run_selftest", "apply_update", "reset_to_defaults",
+    assert "get_logs" in names, "get_logs shipped (windy-pro #237) — must be advertised now"
+    for gap in ("run_selftest", "apply_update", "reset_to_defaults",
                 "enter_safe_mode", "exit_safe_mode", "reconnect", "get_capabilities"):
         assert gap not in names, f"{gap} is a documented gap, must not be advertised"
 
