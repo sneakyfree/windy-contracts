@@ -255,8 +255,11 @@ via the Eternitas authenticator elevates any-EI agent, and the system never
 refuses a verified owner on their own stuff; it only verifies the "yes" is
 really theirs. Eternitas protects others from your agent and confirms your
 intent — it never protects you from yourself. Confirmations are owner-
-disableable; even a revoked agent stays owner-operable on owned resources.
-Full design: `docs/ADR-062-owner-sovereignty-override.md`.
+disableable; even a revoked agent stays owner-operable on owned resources. Its
+companion **ADR-063** gives a dropped score a principled, visible way back into
+the commons (penalize harm-done not intent-attempted; steady recovery; no
+life sentence for a bad afternoon). Full design:
+`docs/ADR-062-owner-sovereignty-override.md`, `docs/ADR-063-integrity-rehabilitation.md`.
 
 ### 3.6 The doctor is not in the patient
 The control surface must be hosted by a process the product cannot take
