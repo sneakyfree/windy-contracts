@@ -5,6 +5,27 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-14 — GAP-CLOSING #17: WORD reconnect (4th Class-D knob)
+
+- **windy-pro #240: Word reconnect** — re-establish the primary connection
+  (Python transcription engine) WITHOUT a full app restart. doctor/
+  reconnect.js dependency-injected: engine down → startPythonServer (the
+  crash-recovery path) + WS-handshake verify; engine up → just verify. NEVER
+  restarts a live engine. Per-stage `passed`. ⚠️ main.js ONE additive route
+  POST /control/reconnect; WS probe = existing ws:// handshake, 4×750ms
+  retries + 2s timeout, clean terminate; nothing in recording/paste/Wayland/
+  focus; node --check clean. Manifest 16→17; gap-test updated (4 knobs
+  advertised, 4 gaps remain). 5 new tests; Word suites 42/42.
+- make check 87. 🔴 Grant: Word desktop rebuild.
+- **WORD BASELINE now 9/13 live (was 5): the 4 shipped this session
+  (get_logs, get_capabilities, run_selftest, reconnect) join the original
+  5. REMAINING 4 baseline gaps are all MUTATING / always_confirm-class:
+  enter/exit_safe_mode, apply_update, reset_to_defaults — most care.** Plus
+  the SUPERVISOR+resurrection (§3.6 biggest), GET /tools, ~90-route parity,
+  surfaces.json.
+- **Next:** safe-mode (enter/exit — a settings overlay, moderate) OR the
+  supervisor (biggest, own pass) OR Mail canary-mailbox OR pause for review.
+
 ## 2026-07-14 — GAP-CLOSING #16: WORD run_selftest (3rd Class-D knob; first non-read-only)
 
 - **windy-pro #239: Word run_selftest** — the FIRST non-read-only Word knob,
