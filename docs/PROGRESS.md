@@ -5,6 +5,27 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-14 — GAP-CLOSING #15: WORD get_capabilities (2nd Class-D baseline knob)
+
+- **windy-pro #238: Word get_capabilities** — tri-state per-FEATURE probe
+  (recording/paste/tts/translate/clone), supported|unsupported|unknown,
+  PROBED not assumed (§3.4). New safe module doctor/capabilities.js:
+  paste via the strategy registry's detectAvailable(); tts via platform +
+  engine binary; recording = present capability, LIVE mic check deferred to
+  run_selftest (getUserMedia grab would steal focus — forbidden); translate
+  present/network-dependent; clone honestly `unknown` (entitlement-gated).
+  ⚠️ main.js: ONE additive read-only route GET /control/capabilities after
+  the token wall — NOTHING in recording/paste/Wayland/focus; node --check
+  clean. Manifest 14→15; Word gap-test updated (get_logs + get_capabilities
+  now advertised, 6 gaps remain). 5 new tests; Word suites 30/30.
+- make check 87. 🔴 Grant: Word desktop rebuild.
+- **WORD REMAINING: 6 baseline gaps (run_selftest, reconnect, enter/exit_
+  safe_mode, apply_update, reset_to_defaults) + SUPERVISOR+resurrection
+  (§3.6, biggest) + GET /tools + ~90-route parity + surfaces.json.**
+- **Next:** run_selftest (record→transcribe canary — needs a bundled test
+  clip + engine round-trip; more involved than the reads) OR the supervisor
+  (biggest, most care) OR Mail canary-mailbox selftest.
+
 ## 2026-07-14 — GAP-CLOSING #14: Mind ops-hook→canon swap + WORD's first Class-D baseline knob (get_logs)
 
 - **windy-mind #63: bespoke ops-hook → vendored canon.** Mind was the DONOR
