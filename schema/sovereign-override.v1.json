@@ -1,0 +1,75 @@
+{
+  "$comment": "ADR-062 + ADR-063 — the wire protocol for the owner-sovereignty override. A platform surface implements this to let a verified human owner elevate a low-EI agent on the owner's OWN resource. Analogous to CONFIRM_FLOW.v1 (consent) but for AUTHORITY ELEVATION. The Loom should generate the override path so platforms inherit it. Governance-first: the rules below are normative; the message shapes are the interface.",
+  "contract": "sovereign-override.v1",
+  "depends_on": ["EI_CAPABILITY_MATRIX.v1", "resource-trust-policy.v1", "CONFIRM_FLOW.v1"],
+  "rules": {
+    "root_means_root": "A VERIFIED owner is never refused on their own resource (ADR-062 §1). The protocol's only jobs are to verify it's really the owner and (defeatably) confirm intent — never to deny.",
+    "commons_never": "The override applies ONLY on a resource the caller owns/admins per resource-trust-policy.v1. It NEVER grants autonomous capability in the commons, cross-resource reach, or ecosystem-wide action. Commons = harm to others, not egress.",
+    "ownership_authoritative": "The resource decides ownership (its own roster, verified via Eternitas EH identity). An agent asserting ownership proves nothing.",
+    "verified_cosign_required": "An override_grant is valid ONLY if its cosign is a VERIFIED Eternitas authenticator signature: a detached P-256 signature over the elevation payload, verified against the device's registered key, with the device's operator confirmed to own the agent. An unverified / merely-stored signature is INVALID (this closes the authenticator.py:812 gap and is the hard prerequisite). The cosign is the owner's ROOT KEY — the one thing a hijacked agent cannot forge.",
+    "always_confirm_floor": "Money/destructive actions still confirm unless the resource policy sets confirmations:off. The human's authenticator approval IS the confirm — one yes covers both elevation and consent.",
+    "scope": "A grant is scoped to action | session (per policy.session_grants) AND to the one resource. Session grants expire. Never persistent, never cross-resource.",
+    "audit_to_operator": "Every override request, grant, and use is audited to the operator EH. Repeated co-signing of actions later upheld as abusive IN THE COMMONS costs the operator's own standing (ADR-062 vouch-accountability, commons-only). Vouching on your own resource is free.",
+    "revoked": "A revoked agent follows policy.revoked_agent: 'owner-root' → full owner operation via co-sign with a ONE-TIME compromise informed-consent (re-shown on a new session / long gap / escalating action); 'none' → denied. Never restores commons autonomy.",
+    "misunderstanding_path": "The override_required response carries what_happened context; the client may offer the ADR-063 misunderstanding fast-path (attest_misunderstanding) — owner-attested, logged to owner standing, discounts-not-erases consummated harm, rate-limited."
+  },
+  "messages": {
+    "override_required": {
+      "$comment": "Surface → client. Returned INSTEAD of a hard deny when an action is EI-blocked but the caller is a verified owner/admin of the resource and policy permits override. Not an error — an invitation to co-sign.",
+      "type": "object",
+      "required": ["sovereign_override_required", "resource", "action", "elevation_request_id"],
+      "properties": {
+        "sovereign_override_required": { "const": true },
+        "resource": { "type": "string" },
+        "action": { "type": "string" },
+        "reason": { "type": "string", "$comment": "plain-English, grandma-legible: 'Fly's trust dropped to 380; you own this site, so you can approve it.'" },
+        "elevation_request_id": { "type": "string" },
+        "scope_offered": { "type": "string", "enum": ["action", "session"] },
+        "what_happened": { "type": "object", "$comment": "ADR-063 context for the misunderstanding path: the penalizing event(s), whether harm was consummated or blocked." }
+      }
+    },
+    "elevation_request": {
+      "$comment": "Client → Eternitas authenticator (fan-out to the operator's paired devices). The 'elevate' variant of the existing M5 approval inbox — grants, where today's inbox only denies.",
+      "type": "object",
+      "required": ["elevation_request_id", "operator", "agent", "resource", "action"],
+      "properties": {
+        "elevation_request_id": { "type": "string" },
+        "operator": { "type": "string", "$comment": "EH operator passport" },
+        "agent": { "type": "string", "$comment": "ET agent passport" },
+        "resource": { "type": "string" },
+        "action": { "type": "string" },
+        "scope": { "type": "string", "enum": ["action", "session"] },
+        "action_summary": { "type": "string" },
+        "is_money_or_destructive": { "type": "boolean" }
+      }
+    },
+    "override_grant": {
+      "$comment": "Authenticator → client → surface. The verified co-sign. The surface MUST verify the cosign per rules.verified_cosign_required before honoring.",
+      "type": "object",
+      "required": ["grant", "resource", "operator", "agent", "scope", "cosign", "audit_id"],
+      "properties": {
+        "grant": { "const": "sovereign-override.v1" },
+        "resource": { "type": "string" },
+        "operator": { "type": "string" },
+        "agent": { "type": "string" },
+        "scope": { "type": "string", "enum": ["action", "session"] },
+        "action": { "type": "string", "$comment": "present when scope=action" },
+        "session_expires": { "type": "string", "$comment": "ISO-8601; present when scope=session" },
+        "cosign": { "type": "string", "$comment": "detached P-256 signature over the elevation payload (verified, not merely stored)" },
+        "informed_consent_ack": { "type": "boolean", "$comment": "true when the one-time compromise screen was acknowledged (revoked agents)" },
+        "audit_id": { "type": "string" }
+      }
+    },
+    "attest_misunderstanding": {
+      "$comment": "Client → Eternitas (ADR-063 §3 fast-path). Owner attests a penalizing event was a misunderstanding. Logged to owner standing; discounts-not-erases consummated harm; rate-limited.",
+      "type": "object",
+      "required": ["operator", "agent", "integrity_event_id"],
+      "properties": {
+        "operator": { "type": "string" },
+        "agent": { "type": "string" },
+        "integrity_event_id": { "type": "string" },
+        "note": { "type": "string" }
+      }
+    }
+  }
+}

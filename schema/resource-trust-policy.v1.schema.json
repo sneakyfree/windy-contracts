@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/sneakyfree/windy-contracts/schema/resource-trust-policy.v1.schema.json",
+  "title": "Resource trust policy, v1",
+  "$comment": "ADR-062 §6 — the creator's dial. One policy per resource (repo/site/project/file/platform), set by its owner, governing how much agent-EI matters ON THIS RESOURCE and what the owner may override. Ownership is authoritative and lives with the resource (account-server product_accounts for Windy resources; the platform's own roster otherwise); this schema is the shape platforms serialize + validate. An ABSENT or minimal policy = sovereign-permissive (the defaults below): the owner's good-standing agent works hands-free, a dropped agent works with one owner co-sign, only money/destructive ask once, and even a revoked agent stays owner-operable. 'Root means root' (ADR-062 §1): the verified owner is never refused on their own resource — the policy tunes friction and autonomy, it cannot lock a verified owner out of their own stuff (only the owner may choose to lock themselves via override_forbidden_actions).",
+  "type": "object",
+  "required": ["resource", "owner"],
+  "properties": {
+    "policy": { "const": "resource-trust-policy.v1" },
+    "resource": {
+      "type": "string",
+      "$comment": "Opaque resource id, meaningful to the owning platform."
+    },
+    "owner": {
+      "type": "string",
+      "$comment": "The resource owner — an Eternitas EH operator passport (or a platform identity that resolves to one). Verified via Eternitas identity, NEVER agent-asserted."
+    },
+    "admins": {
+      "type": "array",
+      "items": { "type": "string" },
+      "$comment": "Delegated-admin EH passports who may also co-sign for this resource (the engineer-on-a-company-repo case). Empty by default."
+    },
+    "min_ei_autonomous": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000,
+      "default": 600,
+      "$comment": "EI below which the agent needs owner/admin co-sign to act on this resource UNSUPERVISED. Default 600 (Standard): a good-standing agent acts hands-free on its owner's resource; a dropped agent still works, with one owner co-sign. Raise for stricter resources; the owner co-sign path stays available regardless (unless override:none)."
+    },
+    "override": {
+      "type": "string",
+      "enum": ["owner-or-admin", "owner-only", "none"],
+      "default": "owner-or-admin",
+      "$comment": "Who may co-sign an override on this resource. 'none' = a strict resource where the owner has chosen NO override (e.g. locked prod) — the owner locking themselves, which sovereignty permits."
+    },
+    "session_grants": {
+      "type": "boolean",
+      "default": true,
+      "$comment": "Allow 'approve everything on this resource while I'm working' (session-scoped, expires). Disallowed → per-action co-sign only."
+    },
+    "confirmations": {
+      "type": "string",
+      "enum": ["default", "off"],
+      "default": "default",
+      "$comment": "The always-confirm floor for money/destructive on THIS resource. 'default' = ask once (a confused/hijacked agent can't do the irreversible in the owner's name; one human yes answers it). 'off' = the owner has turned confirmations off for their own resource ('just do it'). ADR-062 §1: confirmation is defeatable, never a refusal."
+    },
+    "override_forbidden_actions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "$comment": "Actions that are NEVER overridable on this resource — the owner choosing to lock even themselves (e.g. deploy_prod). Empty by default."
+    },
+    "revoked_agent": {
+      "type": "string",
+      "enum": ["owner-root", "none"],
+      "default": "owner-root",
+      "$comment": "Whether a REVOKED agent may still be owner-operated on this resource. 'owner-root' (default) = yes, fully, via verified co-sign, with a one-time compromise informed-consent screen (ADR-062 §5). 'none' = the owner has chosen that a revoked agent gets nothing here."
+    }
+  },
+  "additionalProperties": false
+}
