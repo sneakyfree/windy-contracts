@@ -5,6 +5,20 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-14 — ADR-062 v1.1: root means root (Grant directive)
+
+- **windy-contracts #35.** Grant's values line canonized: Eternitas protects
+  OTHERS from your agent + verifies a choice is really yours; NEVER protects
+  you from yourself. On your OWN things the verified human is ROOT, no limit.
+- Corrected v1.0 paternalism: confirmation = defeatable authority-assertion
+  (not self-protection); revoked ≠ locked out (owner keeps root over own
+  resources, informed-consent only for the compromise case); commons = HARM
+  TO OTHERS not egress (grandma family email flows at any EI). Kept 2
+  invariants reframed as sovereignty-ENABLERS: verified human presence (the
+  root key, un-forgeable) + commons boundary (protects you from OTHERS agents).
+- Flagged for Grant: compromise informed-consent screen (inform-once vs
+  notification); vouch-accountability (commons-only); rehab timing (ADR-063).
+
 ## 2026-07-14 — ADR-062: the owner-sovereignty override (canon)
 
 - **windy-contracts #34.** Solves EI's catastrophic failure: a dropped/
