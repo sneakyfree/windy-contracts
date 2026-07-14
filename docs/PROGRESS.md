@@ -5,6 +5,36 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — GAP-CLOSING #9: ops-hook goes FLEET-CANONICAL + first vendor (Search)
+
+- **windy-contracts #29: `ops-hook/` canonicalized.** Extracted the
+  windy-mind donor (#61) into the canon and fully env-parameterized —
+  OPS_HOOK_COMPOSE_CMD (the SUBSTRATE invocation verbatim), _CONFIG_
+  ALLOWLIST, _MIGRATE_CMD (optional — stateless services skip the
+  stage), _IMAGE_REF / _PATIENT_URL / _WORKDIR / unique _PORT. Every
+  Class-C host now runs the SAME bytes; per-host truth lives only in the
+  unit env. 12 canonical tests join make check → **81 green**. Port
+  checklist + security model in ops-hook/README.md. HOOK_VERSION 2.0.0.
+- **windy-search #62: first vendor.** service/ops-hook/hook.py vendored
+  BYTE-IDENTICAL + tests/test_ops_hook_drift.py (sha256 compare vs the
+  canon when both repos present, canonical-marker + env-driven checks
+  always) — the ecosystem's vendor+drift-guard pattern. Host env
+  template verified against SUBSTRATE (workdir /opt/windy-search/
+  deploy-prod, -p windysearch-prod, service search-api, image
+  windy-search-api:local, patient host-port 8510, allowlist BRAVE/
+  GOOGLE keys + LOG_LEVEL, no migrate, port 8901). systemd unit + Caddy
+  /hook/* snippet + README. Manifest UNCHANGED — the 3 mutating knobs
+  stay STAGED gaps until install. Full suite 341 passed.
+- **Pattern proven: adding a host = vendor hook.py + one env file + one
+  unit + drift test.** Mail/Clone/Chat/admin/Mind(migrate to canon) are
+  now pure replication.
+- **🔴 GRANT-GATED (per host):** verify OPS_HOOK_IMAGE_REF on the box →
+  mint OPS_HOOK_TOKEN to the unit env + lockbox → install unit + Caddy
+  route → smoke → bind the 3 knobs + re-weave.
+- **Next:** replicate the vendor across the remaining hosts (Mail,
+  Clone, admin; Mind swaps its bespoke copy for the vendored canon),
+  OR check_for_update fleet-wide, OR Word Class-D (LAST).
+
 ## 2026-07-13 (night) — GAP-CLOSING #8: Admin healing reads SHIPPED — 🏁🏁 EVERY Class-C read gap in the fleet is CLOSED
 
 - **windy-admin #26 merged** — the last one. Every cloud platform
