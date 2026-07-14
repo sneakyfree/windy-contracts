@@ -229,10 +229,13 @@ signature over the approval payload against `ept_pubkey_b64`. Hardens every
 existing approval too. **Eternitas-side (independent LLC — arms-length; spec
 here, implement in a gated Eternitas PR).**
 
-**The contract:** pin `SOVEREIGN_OVERRIDE.v1` (and `resource_trust_policy.v1`,
-§6) as vendored contracts alongside CONFIRM_FLOW.v1 + EI_CAPABILITY_MATRIX.v1,
-so every platform speaks one override language. The Loom generates the
-co-sign path so platforms inherit it rather than reinventing.
+**The contracts — PINNED (windy-contracts):**
+`schema/sovereign-override.v1.json` (the wire protocol: `override_required`,
+`elevation_request`, `override_grant`, `attest_misunderstanding` + the
+normative rules) and `schema/resource-trust-policy.v1.schema.json` (the
+creator's dial, §6), alongside CONFIRM_FLOW.v1 + EI_CAPABILITY_MATRIX.v1, so
+every platform speaks one override language. The Loom generates the co-sign
+path so platforms inherit it rather than reinventing.
 
 **Per lane:**
 - **Eternitas:** verified co-sign; an `elevate` approval variant (grants, not
