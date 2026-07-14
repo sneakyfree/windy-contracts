@@ -27,6 +27,7 @@ os.environ["OPS_HOOK_COMPOSE_CMD"] = "docker compose -p testproj --env-file .env
 os.environ["OPS_HOOK_SERVICE"] = "test-api"
 os.environ["OPS_HOOK_IMAGE_REF"] = "windy-test-api:local"
 os.environ["OPS_HOOK_CONFIG_ALLOWLIST"] = "BRAVE_SEARCH_API_KEY,LOG_LEVEL"
+os.environ["OPS_HOOK_SERVICES"] = "media,directory,hub"
 os.environ["OPS_HOOK_GATE_ATTEMPTS"] = "3"
 os.environ["OPS_HOOK_GATE_INTERVAL"] = "0.01"
 
@@ -39,12 +40,16 @@ class FakeRunner:
     def __init__(self):
         self.calls: list[list[str]] = []
         self.fail_prefixes: list[list[str]] = []
+        # `compose ps <svc>` output the service_up_gate parses. Default = up.
+        self.ps_output = "NAME  IMAGE  STATUS\nmedia  x  running (healthy)"
 
     def __call__(self, cmd, timeout=600.0):
         self.calls.append(list(cmd))
         for prefix in self.fail_prefixes:
             if cmd[: len(prefix)] == prefix:
                 return 1, "boom"
+        if "ps" in cmd:
+            return 0, self.ps_output
         return 0, "ok"
 
 
@@ -242,3 +247,44 @@ def test_config_failed_gate_restores_env(rig):
                          body={"nonce": _nonce(base), "key": "BRAVE_SEARCH_API_KEY", "value": "bad"})
     assert body["passed"] is False
     assert "BRAVE_SEARCH_API_KEY=old-brave" in rig["env"].read_text()
+
+
+# ── per-service restart (multi-service hosts) ───────────────────────────
+
+def test_restart_service_happy_path(rig):
+    base = rig["base"]
+    status, body = _call(base, "POST", "/hook/restart-service",
+                         body={"nonce": _nonce(base), "service": "media"})
+    assert body["passed"] is True
+    assert [s["name"] for s in body["stages"]] == ["allowlist", "restart", "service_gate"]
+    restart = next(c for c in rig["runner"].calls if "restart" in c and "media" in c)
+    assert restart[:6] == ["docker", "compose", "-p", "testproj", "--env-file", ".env.production"]
+
+
+def test_restart_service_rejects_non_allowlisted(rig):
+    base = rig["base"]
+    status, body = _call(base, "POST", "/hook/restart-service",
+                         body={"nonce": _nonce(base), "service": "postgres"})
+    assert body["passed"] is False and body["stages"][0]["name"] == "allowlist"
+    # never issued a restart for a non-allowlisted service
+    assert not any("postgres" in c for c in rig["runner"].calls)
+
+
+def test_restart_service_requires_nonce(rig):
+    status, body = _call(rig["base"], "POST", "/hook/restart-service",
+                         body={"service": "media"})
+    assert status == 428 and body["error"] == "confirm_required"
+
+
+def test_restart_service_gate_fails_when_not_up(rig):
+    rig["runner"].ps_output = "NAME  IMAGE  STATUS\nmedia  x  Exited (1)"
+    base = rig["base"]
+    status, body = _call(base, "POST", "/hook/restart-service",
+                         body={"nonce": _nonce(base), "service": "media"})
+    assert body["passed"] is False
+    assert {s["name"]: s for s in body["stages"]}["service_gate"]["ok"] is False
+
+
+def test_health_lists_restartable_services(rig):
+    status, body = _call(rig["base"], "GET", "/hook/health", token=None)
+    assert body["restartable_services"] == ["directory", "hub", "media"]

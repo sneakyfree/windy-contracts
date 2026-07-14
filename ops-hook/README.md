@@ -14,8 +14,10 @@ vendor+drift-guard pattern, cf. canonical-domains lint). Per-host
 differences live entirely in the systemd unit's env file — see the header
 of `hook.py` for every `OPS_HOOK_*` variable. Extracted from the
 windy-mind donor implementation (windy-mind #61, 12-test proven), then
-generalized: compose invocation, allowlist, migrate step, bind port, and
-patient URL are all env-driven.
+generalized: compose invocation, allowlist, migrate step, bind port,
+patient URL, build-vs-pull mode, and (v2.1) a multi-service per-service
+restart (`OPS_HOOK_SERVICES` → `POST /hook/restart-service {service}`,
+gated on compose's own service state) are all env-driven.
 
 ## Port checklist (per platform)
 
