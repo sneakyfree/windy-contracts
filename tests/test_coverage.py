@@ -61,12 +61,13 @@ def test_real_fixture_has_no_phantoms_against_its_own_routes():
     m = _fx("windy-mind", "ops.mcp.v1.json")
     served = [{"method": "GET", "path": p} for p in
               ("/health", "/version", "/health/providers", "/v1/models", "/v1/route",
-               "/ops/logs", "/ops/config")]
+               "/ops/logs", "/ops/config", "/ops/check-update")]
     served.append({"method": "POST", "path": "/ops/selftest"})
     r = coverage_report(m, served)
     assert r.ok and not r.phantom
     assert set(r.covered) == {"/health", "/version", "/health/providers", "/v1/models",
-                              "/v1/route", "/ops/logs", "/ops/config", "/ops/selftest"}
+                              "/v1/route", "/ops/logs", "/ops/config", "/ops/selftest",
+                              "/ops/check-update"}
 
 
 # ── uncovered candidates + product filtering ────────────────────────
