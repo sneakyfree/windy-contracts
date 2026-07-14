@@ -150,6 +150,10 @@ async function fetchJson(url, init, timeoutMs) {{
   let parsed;
   try {{ parsed = JSON.parse(text); }}
   catch {{ return res.ok ? {{ ok: true, raw: text }} : {{ ok: false, error: text || `HTTP ${{res.status}}` }}; }}
+  // Sovereign-override (sovereign-override.v1): the surface says "you own this,
+  // co-sign to proceed" instead of denying. NOT an error — preserve the marker
+  // verbatim so the caller drives the owner elevation, never flattens it away.
+  if (parsed && parsed.sovereign_override_required === true) return parsed;
   // A bespoke route that returns 4xx/5xx JSON without an ok flag: normalize
   // so the agent always sees {{ok:false}} (the 401 remediation body survives).
   if (!res.ok && (parsed == null || parsed.ok === undefined)) return {{ ok: false, ...(parsed || {{}}) }};
@@ -224,6 +228,12 @@ export function buildServer(authOverride = null) {{
     }}
     const result = await invoke(name, args, 15000, routeTable, authOverride);
     const text = JSON.stringify(result, null, 2);
+    // Sovereign-override: an actionable next step ("owner co-sign needed"),
+    // NOT a failure — return it as normal content (isError:false) with a clear
+    // banner so the agent relays it to the owner instead of retrying/giving up.
+    if (result && result.sovereign_override_required === true) {{
+      return {{ content: [{{ type: 'text', text: `OWNER APPROVAL REQUIRED — this is your resource; approve to proceed.\\n${{text}}` }}] }};
+    }}
     return result && result.ok === false
       ? {{ isError: true, content: [{{ type: 'text', text }}] }}
       : {{ content: [{{ type: 'text', text }}] }};
@@ -410,6 +420,10 @@ def _normalize(r) -> dict[str, Any]:
         body = r.json()
     except Exception:
         return {{"ok": r.status_code < 400, "raw": r.text[:400]}}
+    # Sovereign-override (sovereign-override.v1): preserve the marker verbatim
+    # so the caller drives the owner elevation — never flattened to an error.
+    if isinstance(body, dict) and body.get("sovereign_override_required") is True:
+        return body
     if r.status_code >= 400 and (not isinstance(body, dict) or body.get("ok") is not False):
         body = {{"ok": False, **(body if isinstance(body, dict) else {{"raw": body}})}}
     return body

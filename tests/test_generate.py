@@ -198,6 +198,22 @@ def test_word_client_builds_a_route_table(word_woven: Path):
     assert "new URLSearchParams" in client
 
 
+def test_woven_packet_is_sovereign_override_aware(word_woven: Path):
+    # ADR-062: the Loom generates the co-sign path so platforms inherit it.
+    # All three emitted surfaces must PRESERVE + legibly surface an
+    # `override_required` response instead of flattening it to an error.
+    client = (word_woven / "mcp-packet" / "src" / "client.js").read_text()
+    server = (word_woven / "mcp-packet" / "src" / "server.js").read_text()
+    twin = (word_woven / "windy_word_twin.py").read_text()
+    # client preserves the marker verbatim (doesn't normalize it to {ok:false})
+    assert "sovereign_override_required === true" in client and "return parsed" in client
+    # tools/call surfaces it as an actionable step, not a failure
+    assert "OWNER APPROVAL REQUIRED" in server
+    assert "sovereign_override_required === true" in server
+    # the python twin preserves it too
+    assert 'get("sovereign_override_required") is True' in twin
+
+
 @pytest.mark.skipif(shutil.which("node") is None, reason="node not on PATH")
 def test_word_generated_js_parses(word_woven: Path):
     for rel in ("src/client.js", "src/index.js"):
