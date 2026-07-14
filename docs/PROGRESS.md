@@ -5,6 +5,34 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — GAP-CLOSING #13: ops-hook v2.1 per-service restart + Chat's first hook (multi-service reconnect)
+
+- **Canon v2.1 (windy-contracts #33):** OPS_HOOK_SERVICES allowlist →
+  POST /hook/restart-service {service}: restart ONE named sibling service,
+  allowlisted, gated on compose's OWN state (`compose ps <svc>` → running;
+  no HTTP/auth dependency — siblings sit on the compose network the host
+  can't reach). /hook/health lists restartable_services. Empty allowlist →
+  disabled (inert for single-service hosts). 18 canonical tests. HOOK_VERSION
+  2.1.0.
+- **Re-vendored byte-identical:** Search #65 (+ dropped a brittle
+  version-literal drift assert — the sha256 compare is the guard), Mail #87,
+  Clone #61, admin #30. Drift tests green everywhere.
+- **windy-chat #146: Chat's FIRST ops-hook** (deploy/ops-hook/) — the
+  per-service RECONNECT the aggregator's read view informs. Allowlist = the
+  Node microservices + bridges; **EXCLUDES synapse (P0 kernel — never
+  bounce), its datastores, coturn, nginx, off-host web.** Compose invocation
+  carries both overlay files + --env-file. node:test drift guard. Manifest
+  reconnect/restart_app → STAGED (mechanism built, install-gated; then bind
+  namespaced reconnect.<service>). Chat's own box → port 8901.
+- **The aggregator read (get_health, #143) + per-service restart mutation
+  (#146) now form Chat's full see-then-heal loop** — pending the Grant-gated
+  install (unit + nginx /hook/* route).
+- make check 87.
+- **🔴 GRANT-GATED per host:** install units (+ Chat's nginx /hook/* route),
+  then bind the namespaced knobs + re-weave.
+- **Next:** Mail canary-mailbox selftest, Mind bespoke→canon swap, OR Word
+  Class-D (LAST).
+
 ## 2026-07-13 (night) — GAP-CLOSING #12: check_for_update — REPLICATED FLEET-WIDE (🏁 every Class-C platform)
 
 - Replicated the Mind check_for_update template (windy-mind #62) across
