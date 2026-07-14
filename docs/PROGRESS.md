@@ -5,6 +5,22 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-14 — trust contracts pinned (design→interface complete)
+
+- **windy-contracts #37.** ADR-062/063 turned from prose into the wire
+  interface platforms + Eternitas build AGAINST (no Eternitas-repo touch).
+- `schema/resource-trust-policy.v1.schema.json` — the creator's dial;
+  defaults = sovereign-permissive; root-means-root encoded (policy tunes
+  friction/autonomy, can't lock a verified owner out; only owner locks self).
+- `schema/sovereign-override.v1.json` — 4-message wire protocol
+  (override_required/elevation_request/override_grant/attest_misunderstanding)
+  + 9 normative rules incl. verified_cosign_required (closes authenticator.py:
+  812 = the hard prereq). 8 tests. make check 95.
+- **TRUST MODEL fully specified: ADR-060 (doctrine) + 061 (reconciliation) +
+  062 (sovereignty/root-means-root) + 063 (rehab) + the 2 pinned contracts.**
+  Remaining = Eternitas-side build (gated, arms-length) + platform integration
+  (fan-out). Nothing built in any repo — contracts define it.
+
 ## 2026-07-14 — ADR-062 ratified + ADR-063 rehab: trust model design COMPLETE
 
 - **windy-contracts #36.** ADR-062 §9 ratified (compromise inform-once;
