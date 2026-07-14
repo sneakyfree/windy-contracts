@@ -5,6 +5,21 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-14 — Loom sovereign-override aware (doctrine promise delivered)
+
+- **windy-contracts #38.** ADR-062: 'the Loom generates the co-sign path so
+  platforms inherit it.' All 3 emitters now recognize a sovereign-override.v1
+  override_required response and PRESERVE it (not flatten to error):
+  client.js returns marker verbatim; server.js tools/call surfaces 'OWNER
+  APPROVAL REQUIRED' (isError:false) banner; Python twin _normalize too.
+- **Proven LIVE:** mock surface → override_required → woven packet booted →
+  tools/call returned 'OWNER APPROVAL REQUIRED' isError=false, elevation_
+  request_id + reason intact. Wire-only, no Eternitas backend touch =
+  forward-compatible plumbing; every future woven platform is trust-model-
+  ready for free. make check 96.
+- **Trust model now: designed (060-063) + contracts pinned + Loom-inherited.**
+  Remaining = Eternitas-side build (gated) + platform policy storage (fan-out).
+
 ## 2026-07-14 — trust contracts pinned (design→interface complete)
 
 - **windy-contracts #37.** ADR-062/063 turned from prose into the wire
