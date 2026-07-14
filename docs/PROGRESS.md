@@ -5,6 +5,25 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-14 — ADR-062: the owner-sovereignty override (canon)
+
+- **windy-contracts #34.** Solves EI's catastrophic failure: a dropped/
+  misunderstood score locking an owner out of their OWN resources. Principle:
+  EI gates autonomy in the COMMONS; owner's verified authority governs their
+  OWN house (two zones, per-resource).
+- Grounded in the Eternitas deep-dive: humans DO have an ID (EH operator
+  passport); the authenticator already proves human-present+owns-agent (gates
+  DOWN today → add ELEVATE); account-server holds ownership. Net-new:
+  per-resource trust policy (creator's dial) + VERIFIED co-signature (close
+  authenticator.py:812 — hard prerequisite; Eternitas-side, arms-length).
+- Pins: decision algorithm; invariants (commons never overridable, ownership
+  authoritative, always-confirm floor survives, accountability→voucher);
+  graduated dip/critical/revoked; policy dial (default sovereign-permissive);
+  grandma worked example; SOVEREIGN_OVERRIDE.v1 + resource_trust_policy.v1
+  contracts; ADR-063 rehab companion. AGENT_CONTROL §3.5 points to it.
+- Status ACCEPTED (design); BUILD GATED on prereq + 3 Grant ratifications
+  (§9: revoked-line, vouch-accountability, rehab-in-tandem). Docs only.
+
 ## 2026-07-14 — GAP-CLOSING #18: WORD enter/exit_safe_mode (5th/6th Class-D knobs; first MUTATING)
 
 - **windy-pro #241: Word safe-mode** — first MUTATING Word knobs, made safe
