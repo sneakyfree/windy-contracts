@@ -5,6 +5,22 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-14 — Eternitas trust-build spec (trust thread design-COMPLETE)
+
+- **windy-contracts #39.** docs/handoffs/ETERNITAS-TRUST-BUILD-2026-07-14.md
+  — precise phased build spec for the Eternitas side of ADR-062/063 (arms-
+  length; Grant-gated to commission). Phase 0 = verified co-sign (hard
+  blocker, authenticator.py:812); 1 = elevate variant; 2 = rehab mechanics;
+  3 = fast-path + projection; 4 = vouch-accountability.
+- **TRUST THREAD DESIGN-COMPLETE end to end:** design (060-063) → contracts
+  (sovereign-override.v1 + resource-trust-policy.v1) → Loom-inheritance (#38)
+  → build-spec (#39). Everything to commission the build is ready.
+- **⚠️ NATURAL DECISION POINT.** Remaining is either GATED (Eternitas Phase 0
+  build = the critical path; everything trust-related is inert until it ships)
+  or FAN-OUT (platform gap-closing, already running). No more non-speculative
+  in-lane canon on this thread. Grant to steer: commission Eternitas P0, or
+  redirect.
+
 ## 2026-07-14 — Loom sovereign-override aware (doctrine promise delivered)
 
 - **windy-contracts #38.** ADR-062: 'the Loom generates the co-sign path so
