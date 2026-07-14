@@ -5,6 +5,30 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-14 — GAP-CLOSING #18: WORD enter/exit_safe_mode (5th/6th Class-D knobs; first MUTATING)
+
+- **windy-pro #241: Word safe-mode** — first MUTATING Word knobs, made safe
+  by being fully REVERSIBLE + engine-scoped. doctor/safe-mode.js: enter
+  snapshots the exact engine keys, applies KNOWN_GOOD ({engine.engine:local,
+  engine.model:small} — catalog defaults, no cloud/auto-tune); exit restores
+  the snapshot EXACTLY, clears the flag. State in store.safeMode (survives
+  restart). enter idempotent (never clobbers original); exit-when-out = no-op;
+  overlay is ENGINE-ONLY (test-enforced). ⚠️ main.js ONE additive route pair
+  POST /control/safe-mode/{enter,exit} wiring store + the existing
+  applySettingChange (WS hot-reload); nothing in paste/recording/Wayland/
+  focus; node --check clean. Tiers §3.4: enter=auto_allow, exit=ask_first.
+  Manifest 17→19; gap-test updated (6 knobs advertised, 2 gaps remain).
+  6 new tests; Word suites 48/48.
+- make check 87. 🔴 Grant: Word desktop rebuild.
+- **WORD BASELINE now 11/13 live. REMAINING 2 baseline gaps are the
+  always_confirm RCE-class: apply_update (attested + last-known-good
+  rollback; only check_for_update exists today) + reset_to_defaults (factory
+  reset preserving user transcripts/clones) — MOST care.** Plus SUPERVISOR+
+  resurrection (§3.6 biggest), GET /tools, ~90-route parity, surfaces.json.
+- **Next:** reset_to_defaults (factory reset, careful — must preserve user
+  data) OR apply_update (RCE-by-design, most delicate) OR the supervisor
+  (biggest, own pass) OR Mail canary-mailbox OR pause for review.
+
 ## 2026-07-14 — GAP-CLOSING #17: WORD reconnect (4th Class-D knob)
 
 - **windy-pro #240: Word reconnect** — re-establish the primary connection
