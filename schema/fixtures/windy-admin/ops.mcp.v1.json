@@ -6,20 +6,65 @@
   "mcp_protocol": "2025-06-18",
   "$comment": "Windy Admin ops surface — Class C, the LAST procession platform. admin.windyword.ai is the ecosystem's super-admin dashboard + telemetry ingest. Notable connection: admin ALREADY exposes GET /dashboard/fleet — a live '/version fan-out' across the whole fleet — which is the natural home for the Steamroller's fleet-version PUBLISHER (L2 deferred item). The dashboards + ingest + member/cost/audit surfaces are admin's PRODUCT and stay out per §2; this contract is admin's own health + the fleet read. get_capabilities → /dashboard/fleet is admin-gated → band_floor TRUSTED. Rev 2026-07-13 (gap-closing — the LAST Class-C read gap in the fleet): get_logs + get_config + run_selftest SHIPPED as the /ops/* trio, staff-gated (require_admin, any admin_role) like the rest of the dashboard. get_logs is strictly META and content-free by construction (fixed vocabulary — never an ingested event's payload, actor, or member). run_selftest exercises admin's REAL core path: validate a content-free canary envelope → ingest it through the real store → query it back on the same tail the dashboard uses (platform=windy-admin, event_type=ops.selftest); if it passes, the pipeline every platform's telemetry rides is alive end to end. 60s verdict cache; `passed` per the invoke-envelope rule. Mutating gaps: port the windy-mind ops-hook (#61). DEPLOY STATUS: merged; live after the Grant-gated deploy — probe before trusting mid-incident.",
   "baseline_mapping": {
-    "get_health": { "status": "implemented", "maps_to": "GET /health", "note": "checks the admin DB (SELECT 1)." },
-    "get_status": { "status": "implemented", "maps_to": "GET /version" },
-    "get_capabilities": { "status": "implemented", "maps_to": "GET /dashboard/fleet", "note": "admin's signature read: a live /version fan-out across every platform — which services are up and on what build. Admin-gated (TRUSTED). This is where the Steamroller fleet-version publisher should live (L2)." },
-    "get_config": { "status": "implemented", "maps_to": "GET /ops/config", "note": "stack wiring as booleans + emitter-token COUNT (values never listed) — closed 2026-07-13." },
-    "get_logs": { "status": "implemented", "maps_to": "GET /ops/logs", "note": "content-free ring, strictly meta — never ingested-event data — closed 2026-07-13." },
-    "run_selftest": { "status": "implemented", "maps_to": "POST /ops/selftest", "note": "real envelope→ingest→query canary through the actual store; 60s cache — closed 2026-07-13." },
-    "reconnect": { "status": "unsupported" },
-    "restart_app": { "status": "gap", "note": "out-of-band; port the windy-mind ops-hook (windy-mind #61) to the admin host." },
-    "enter_safe_mode": { "status": "unsupported" },
-    "exit_safe_mode": { "status": "unsupported" },
-    "set_setting": { "status": "gap", "note": "alert thresholds/flags are mutable via product routes — expose via ops later if useful." },
-    "check_for_update": { "status": "gap" },
-    "apply_update": { "status": "gap", "note": "SSH-free redeploy; §7. The windy-mind ops-hook (#61) is the pattern to port." },
-    "reset_to_defaults": { "status": "unsupported", "note": "holds the ecosystem's telemetry + audit history." }
+    "get_health": {
+      "status": "implemented",
+      "maps_to": "GET /health",
+      "note": "checks the admin DB (SELECT 1)."
+    },
+    "get_status": {
+      "status": "implemented",
+      "maps_to": "GET /version"
+    },
+    "get_capabilities": {
+      "status": "implemented",
+      "maps_to": "GET /dashboard/fleet",
+      "note": "admin's signature read: a live /version fan-out across every platform — which services are up and on what build. Admin-gated (TRUSTED). This is where the Steamroller fleet-version publisher should live (L2)."
+    },
+    "get_config": {
+      "status": "implemented",
+      "maps_to": "GET /ops/config",
+      "note": "stack wiring as booleans + emitter-token COUNT (values never listed) — closed 2026-07-13."
+    },
+    "get_logs": {
+      "status": "implemented",
+      "maps_to": "GET /ops/logs",
+      "note": "content-free ring, strictly meta — never ingested-event data — closed 2026-07-13."
+    },
+    "run_selftest": {
+      "status": "implemented",
+      "maps_to": "POST /ops/selftest",
+      "note": "real envelope→ingest→query canary through the actual store; 60s cache — closed 2026-07-13."
+    },
+    "reconnect": {
+      "status": "unsupported"
+    },
+    "restart_app": {
+      "status": "gap",
+      "note": "out-of-band; port the windy-mind ops-hook (windy-mind #61) to the admin host."
+    },
+    "enter_safe_mode": {
+      "status": "unsupported"
+    },
+    "exit_safe_mode": {
+      "status": "unsupported"
+    },
+    "set_setting": {
+      "status": "gap",
+      "note": "alert thresholds/flags are mutable via product routes — expose via ops later if useful."
+    },
+    "check_for_update": {
+      "status": "implemented",
+      "maps_to": "GET /ops/check-update",
+      "note": "admin resolves its OWN version against the fleet manifest it publishes; status + literal remediation. Closed 2026-07-13."
+    },
+    "apply_update": {
+      "status": "gap",
+      "note": "SSH-free redeploy; §7. The windy-mind ops-hook (#61) is the pattern to port."
+    },
+    "reset_to_defaults": {
+      "status": "unsupported",
+      "note": "holds the ecosystem's telemetry + audit history."
+    }
   },
   "tools": [
     {
@@ -27,77 +72,186 @@
       "tier": "auto_allow",
       "baseline_status": "implemented",
       "description": "The FIRST call when the admin dashboard or telemetry ingest seems down. Liveness of Windy Admin, including a real check that its database is reachable.",
-      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
-      "transport": { "method": "GET", "path": "/health" }
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "transport": {
+        "method": "GET",
+        "path": "/health"
+      }
     },
     {
       "name": "get_status",
       "tier": "auto_allow",
       "baseline_status": "implemented",
       "description": "Read Windy Admin's deployment identity — which build of the admin panel is serving right now. Use this to confirm a fix actually deployed.",
-      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
-      "transport": { "method": "GET", "path": "/version" }
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "transport": {
+        "method": "GET",
+        "path": "/version"
+      }
     },
     {
       "name": "get_capabilities",
       "tier": "auto_allow",
       "band_floor": "TRUSTED",
       "description": "Get the whole ecosystem's fleet status in one call — a live fan-out that asks every Windy platform which build it is running and whether it is up. The single best 'is the whole fleet healthy' view. Admin-only.",
-      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
-      "transport": { "method": "GET", "path": "/dashboard/fleet" }
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "transport": {
+        "method": "GET",
+        "path": "/dashboard/fleet"
+      }
     },
     {
       "name": "get_logs",
       "tier": "auto_allow",
       "baseline_status": "implemented",
       "description": "Read Windy Admin's recent operational events — server starts and self-test results by category. Strictly meta and content-free by construction: the log can only ever hold fixed event names and codes — never an ingested telemetry event's payload, an actor id, or a member identity. Staff access required.",
-      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
       "returns": {
         "type": "object",
         "properties": {
-          "count": { "type": "number" },
-          "entries": { "type": "array", "description": "[{ts, level, event, code?}] — fixed vocabulary only" }
+          "count": {
+            "type": "number"
+          },
+          "entries": {
+            "type": "array",
+            "description": "[{ts, level, event, code?}] — fixed vocabulary only"
+          }
         }
       },
-      "transport": { "method": "GET", "path": "/ops/logs" }
+      "transport": {
+        "method": "GET",
+        "path": "/ops/logs"
+      }
     },
     {
       "name": "get_config",
       "tier": "auto_allow",
       "baseline_status": "implemented",
       "description": "Read Windy Admin's effective runtime configuration with every secret redacted: whether the event store, staff auth (account-server JWKS), Eternitas admin, Search admin, the Resend mailer, unsubscribe signing, and geo enrichment are wired — plus how many emitter tokens are registered (a count; the tokens themselves are never listed). Staff access required.",
-      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
       "returns": {
         "type": "object",
         "properties": {
-          "environment": { "type": "string" },
-          "database_configured": { "type": "boolean" },
-          "staff_auth_configured": { "type": "boolean" },
-          "eternitas_admin_configured": { "type": "boolean" },
-          "search_admin_configured": { "type": "boolean" },
-          "mailer_configured": { "type": "boolean" },
-          "geo_configured": { "type": "boolean" },
-          "ingest_tokens_registered": { "type": "number" }
+          "environment": {
+            "type": "string"
+          },
+          "database_configured": {
+            "type": "boolean"
+          },
+          "staff_auth_configured": {
+            "type": "boolean"
+          },
+          "eternitas_admin_configured": {
+            "type": "boolean"
+          },
+          "search_admin_configured": {
+            "type": "boolean"
+          },
+          "mailer_configured": {
+            "type": "boolean"
+          },
+          "geo_configured": {
+            "type": "boolean"
+          },
+          "ingest_tokens_registered": {
+            "type": "number"
+          }
         }
       },
-      "transport": { "method": "GET", "path": "/ops/config" }
+      "transport": {
+        "method": "GET",
+        "path": "/ops/config"
+      }
     },
     {
       "name": "run_selftest",
       "tier": "auto_allow",
       "baseline_status": "implemented",
       "description": "Actively exercise Windy Admin's real core path: validate a content-free canary telemetry event, ingest it through the actual event store, and query it back on the same tail the dashboard reads. If this passes, the pipeline that every Windy platform's telemetry rides is alive end to end. Pass/fail per stage (envelope, ingest, query); verdict cached 60 seconds. Staff access required.",
-      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
       "returns": {
         "type": "object",
         "properties": {
-          "passed": { "type": "boolean", "description": "true only when every stage passed ('passed', not 'ok' — top-level ok is reserved for the invoke envelope)" },
-          "stages": { "type": "array", "description": "[{name: envelope|ingest|query, ok, detail?}]" },
-          "duration_ms": { "type": "number" },
-          "cached": { "type": "boolean" }
+          "passed": {
+            "type": "boolean",
+            "description": "true only when every stage passed ('passed', not 'ok' — top-level ok is reserved for the invoke envelope)"
+          },
+          "stages": {
+            "type": "array",
+            "description": "[{name: envelope|ingest|query, ok, detail?}]"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "cached": {
+            "type": "boolean"
+          }
         }
       },
-      "transport": { "method": "POST", "path": "/ops/selftest" }
+      "transport": {
+        "method": "POST",
+        "path": "/ops/selftest"
+      }
+    },
+    {
+      "name": "check_for_update",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "Check whether a newer Windy Admin build is available. Admin both publishes the fleet-version manifest and consumes it — this resolves admin's own running version against it and reports current, update-available, or must-update, with the literal next step when an update exists. Read-only — never deploys; applying is the separate always-confirm apply_update.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "current | update-available | must-update | unknown"
+          },
+          "installed": {
+            "type": "string"
+          },
+          "current": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "remediation": {
+            "type": "string"
+          }
+        }
+      },
+      "transport": {
+        "method": "GET",
+        "path": "/ops/check-update"
+      }
     }
   ]
 }
