@@ -5,6 +5,38 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — GAP-CLOSING #10: ops-hook vendored to the WHOLE Class-C fleet + build|pull mode
+
+- **Canon gained OPS_HOOK_BUILD_MODE** (windy-contracts #30): build (rebuild
+  in place — Mind/Search/admin/Clone `:local` images) | pull (registry image —
+  ghcr-published services). 13 canonical tests. make check green.
+- **Vendored the ops-hook to every remaining Class-C host** — byte-identical
+  hook.py + drift test + env template (verified vs SUBSTRATE) + systemd unit +
+  README on each:
+  - windy-search #62/#63 (re-vendored for build-mode) — port 8901
+  - windy-mail #85 — port 8902. TWO honest install wrinkles flagged: image
+    mode (compose default :local/build, but prod may set WINDYMAIL_API_IMAGE=
+    ghcr → BUILD_MODE=pull) + patient reachability (api NOT host-bound; Caddy
+    proxies api:8200 → PATIENT_URL=https://mail.windymail.ai; /version not
+    routed → no sha attestation until a host bind). set_setting DISABLED
+    (no runtime-rotatable provider keys — Resend is the Stalwart smarthost).
+  - Windy-Clone #59 — port 8903, allowlist EL/HeyGen/Resemble keys+LOG_LEVEL.
+  - windy-admin #27 — port 8904, allowlist RESEND/SEARCH-admin+LOG_LEVEL.
+- **Consolidated-host port registry (54.88.113.79 runs Search+Mail+Clone+admin
+  side by side):** search=8901, mail=8902, clone=8903, admin=8904. Mind is on
+  its OWN EC2 (35.173.154.119) = 8901 there. Pick the next free 890x for any
+  new hook on the consolidated box.
+- **Pattern fully proven: adding the mutating pair to a host = vendor hook.py +
+  1 env file + 1 unit + drift test.** All manifests UNCHANGED (knobs stay
+  STAGED gaps until each Grant-gated install).
+- **🔴 GRANT-GATED per host:** verify OPS_HOOK_IMAGE_REF (+ Mail's mode) on the
+  box → mint OPS_HOOK_TOKEN → unit + proxy /hook/* route → smoke → bind the 3
+  knobs + re-weave. Mind should also swap its bespoke ops-hook for the vendored
+  canon (housekeeping).
+- **Next:** check_for_update fleet-wide (resolve /version vs admin's live
+  /v1/fleet-versions — pure replication), OR Word Class-D (LAST), OR Chat
+  per-service reconnect knobs, OR Mail canary-mailbox selftest.
+
 ## 2026-07-13 (night) — GAP-CLOSING #9: ops-hook goes FLEET-CANONICAL + first vendor (Search)
 
 - **windy-contracts #29: `ops-hook/` canonicalized.** Extracted the
