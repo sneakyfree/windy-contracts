@@ -1,10 +1,11 @@
 # ADR-062 — The owner-sovereignty override
 
 > **2026-07-14. Status: ACCEPTED (design); build gated on prerequisites + the
-> §9 ratifications.** Amends ADR-060 §3.5 (the trust algebra). Grounded in the
-> Eternitas state-of-the-union (2026-07-14 deep-dive). Solves the trust
-> system's one catastrophic failure mode: a dropped integrity score locking an
-> owner out of their own resources.
+> §9 ratifications. v1.1 — root-means-root revision (Grant's directive):** the
+> human is root on their own things without limit; the system never protects
+> you from yourself, only verifies a choice is really yours and protects
+> *others* from your agent. Amends ADR-060 §3.5. Grounded in the Eternitas
+> deep-dive (2026-07-14).
 
 ## 0. The problem
 
@@ -27,17 +28,48 @@ The fix must be **simple, seamless, and grandma-legible**: *"Johnny got
 detention for shooting spitwads. He's still allowed home — want to let him do
 his chores here?"* One tap. Expelled from school ≠ locked out of the house.
 
-## 1. The principle: a sovereignty boundary
+## 1. The principle: root means root
 
-**EI governs what your agent does *alone, in the commons*. Your authority
-governs what your agent does *in your own house*.** Two zones, drawn
-per-resource:
+**Eternitas protects *others* from your agent, and verifies that a choice is
+really *yours*. It NEVER protects you from yourself.** On your own things, the
+verified human is root — without limit. This is a product-values line, not
+just a mechanism: a tool that second-guesses its owner's intent ("are you sure
+you want to touch your own file?") is the exact paternalism that drives people
+away. We do not build it. Grandma can point her agent at anything she owns and
+say "do it," and the system's job is to make that happen.
 
-- **Your sovereign domain** — resources you created / own / admin. Here your
-  live human authority governs; a low-EI agent still works, with you
-  co-signing. EI stops being the gate.
-- **The commons** — shared resources, others' resources, ecosystem-wide
-  action. Here EI governs fully. No override, ever.
+The system does exactly TWO things on your own stuff, and neither is a
+refusal:
+1. **Verify it's really you.** "The human has root" and "anything claiming to
+   be the human has root" are different systems — the second is a security
+   hole that victimizes the owner. The verified human co-signature (§2) is not
+   a nerf; it is the owner's *root key* — the thing that proves the hand
+   authorizing is the human's, not the agent's (possibly hijacked) own. Drop
+   it and an attacker wearing your agent wrecks your stuff *as you*. Keep it
+   and you can do anything — the key just proves it's you.
+2. **Confirm you meant it** (defeatable). A confirmation is the mechanism by
+   which your authority is *asserted*, not the system doubting you. One human
+   yes → it happens. And the owner may switch confirmations OFF for their own
+   resources ("stop asking, just do everything on my stuff"). Sovereignty
+   includes the right to unbuckle the seatbelt on your own property.
+
+### 1.1 The one boundary that makes sovereignty real
+Root on *your* stuff is unlimited. Root does NOT extend to **the commons** —
+shared resources, others' resources, ecosystem-wide action — and you want that
+boundary too, because it is what stops *other people's* tanked agents from
+wrecking *your* stuff. Your car, not the neighbor's; and no dealing off the
+public street. So two zones, drawn per-resource:
+
+- **Your sovereign domain** — resources you own/created/admin. Verified human
+  authority governs, without limit. EI is not the gate here.
+- **The commons** — EI governs fully. No override, ever.
+
+**Commons = risk of HARM TO OTHERS, not merely "touches something external."**
+Grandma emailing three photos to her grandkids leaves her "house" but harms
+no one — addressed, wanted, low-volume — so it is act-own and flows instantly
+at any EI. Spam to 10,000 strangers is harm — that is the commons, and it is
+gated. Her real use case (open my files, email a few to family) never hits a
+wall, because it was never a commons action.
 
 The boundary is not a global setting; it is a property of each resource,
 determined by an authoritative ownership record (§2) and shaped by a
@@ -105,8 +137,12 @@ Given agent A (EPT carrying operator O), action X on resource R, live EI(A):
 - **Ownership is authoritative, never agent-asserted.** The resource's own
   roster (verified via Eternitas identity) decides who owns it. An agent
   claiming ownership proves nothing.
-- **The always-confirm floor survives the override.** Money + destructive
-  always ask, for every band, owner included.
+- **Confirmation asserts the owner's authority; it is never a refusal, and it
+  is defeatable.** By default money + destructive ask once (so a *confused or
+  hijacked agent* can't do the irreversible in the owner's name) — but the ask
+  is answered by one human yes, and **the owner may disable it entirely for
+  their own resources.** The system never says "no" to a verified owner on
+  their own stuff; it only ever confirms the "yes" is really theirs.
 - **Accountability flows to the voucher.** Every override is audited to the
   human operator. Vouching is not free: repeated co-signing of actions later
   found abusive costs the *human's own* standing (§8 — a human-side integrity
@@ -116,17 +152,23 @@ Given agent A (EPT carrying operator O), action X on resource R, live EI(A):
 
 ## 5. Graduated response — dip vs critical vs revoked
 
-Not all low standing is equal (the kid analogy has degrees):
+Low standing limits what the agent may do **alone / in the commons**. It never
+removes the *owner's* right to operate their agent on their *own* things. What
+changes with severity is only how emphatically the system verifies it's really
+the owner, and (for the compromise case) whether it informs them of the risk
+first — never whether they're *allowed*.
 
 | Agent state | On the owner's OWN resources | In the commons |
 |---|---|---|
-| **Below threshold (dip)** | full override: per-action co-sign, or a session grant ("approve everything while I'm working") if P allows | EI-gated as normal |
-| **Critical (<400)** | per-action co-sign only (no blanket session grant); always-confirm floor | denied |
-| **Revoked** | **pure-hands only**: per-action co-sign + always-confirm, no autonomous restoration ("sleeps at home, doesn't drive the car"); P may forbid entirely | denied (kill switch) |
+| **Below threshold (dip)** | full: autonomous if the owner granted it, else one co-sign; session grants allowed | EI-gated as normal |
+| **Critical (<400)** | full owner-directed action via co-sign; session grants allowed if P permits | denied |
+| **Revoked** | **owner still has root** — may operate it fully on their own stuff via verified co-sign, incl. autonomously if they choose. If revocation was for possible COMPROMISE, a ONE-TIME informed-consent screen first ("flagged for X; letting it act is your right; risk is Y") → then honored forever. Never refused. | denied (kill switch — protects *others*) |
 
-Revocation is a deliberate, serious signal — the owner can still operate the
-agent as supervised hands on their own stuff, but the override never *restores*
-autonomy to a revoked agent.
+Revocation is a serious signal, so it strips *autonomy in the commons* and
+warns the owner about *compromise* — but "it's your car, you can hand your kid
+the keys" holds even for a revoked agent on the owner's own property.
+(🔴 §9: the compromise informed-consent screen is the one item flagged for
+Grant — inform-once vs pure-notification.)
 
 ## 6. The creator's policy dial
 
@@ -143,8 +185,10 @@ resource_trust_policy.v1 (sketch — to be pinned as a vendored contract)
   "min_ei_autonomous": 600,              # Standard; below this needs co-sign
   "override": "owner-or-admin",          # owner-or-admin | owner-only | none
   "session_grants": true,               # allow "approve everything while working"
-  "override_forbidden_actions": ["deploy_prod"],  # never overridable, even by owner
-  "revoked_agent": "pure-hands"          # pure-hands | none
+  "confirmations": "default",           # default | off  — owner may switch the
+                                        #   always-ask floor OFF for their own resource
+  "override_forbidden_actions": ["deploy_prod"],  # owner MAY choose to lock even themselves
+  "revoked_agent": "owner-root"          # owner-root (full, informed-consent) | none
 }
 ```
 
@@ -208,22 +252,34 @@ together — they're the two halves of the kid analogy.
 
 ## 9. Decisions
 
-**Taken (Fable's recommendation; Grant said "proceed"):**
-- Override scope = **owner OR delegated-admin**, creator-configurable down to
-  owner-only (makes the company-repo/engineer case work).
-- Always-confirm floor survives the override (seatbelt on your own stuff).
-- Graduated response: dip → full / critical → per-action / revoked →
-  pure-hands (§5).
+**Taken (Grant's directive 2026-07-14 — "root means root; never nerf people
+from themselves"):**
+- **The human is root on their own things, without limit.** The system never
+  refuses a verified owner on their own stuff — it only verifies it's really
+  them and (defeatably) confirms intent. (§1)
+- Confirmations default-on but **owner-disableable** for their own resources;
+  never a refusal. (§4, §6)
+- **Revoked ≠ locked out of your own house:** the owner keeps root over their
+  own resources even for a revoked agent (informed-consent for the compromise
+  case), incl. autonomy if they choose. Revocation strips only the commons +
+  unsupervised-commons autonomy. (§5)
+- Commons = **harm to others, not egress** (grandma's family email flows). (§1.1)
+- Override scope = owner OR delegated-admin, creator-configurable to owner-only.
+- Verified co-sign is a hard prerequisite (it is the owner's root KEY, the one
+  thing that keeps "root" from being forgeable — kept precisely to SERVE
+  sovereignty, not limit it).
 - Default policy = sovereign-permissive.
-- Verified co-sign is a hard prerequisite.
 
 **Flagged for Grant's explicit ratification:**
-- The **revoked line** — confirm that a *revoked* (not merely low-EI) agent
-  gets only supervised pure-hands on owned resources, never autonomy. (§5)
-- **Vouch-accountability** — confirm that a human repeatedly co-signing
-  upheld-abusive actions should take an integrity hit (needs a human-side
-  integrity signal in Eternitas).
-- Whether the **rehab curve** (ADR-063) is built in tandem or deferred.
+- **The compromise informed-consent screen** (§5) — when a revoked agent may
+  be *hijacked*, do we show a one-time "here's the risk, it's your call"
+  before honoring, or drop even that to a pure after-the-fact notification?
+  (The only place "do anything on your own stuff" risks the owner being
+  *deceived* that the intruder is their agent.)
+- **Vouch-accountability** — should a human who repeatedly co-signs
+  upheld-abusive COMMONS actions take a standing hit? (Only bites in the
+  commons — never for anything on their own stuff.)
+- Whether the **rehab curve** (ADR-063) ships in tandem or deferred.
 
 Nothing in this ADR changes any repo yet — it defines the contract. The build
 is gated on the prerequisite + these ratifications.
