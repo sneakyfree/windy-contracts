@@ -157,6 +157,15 @@ def test_redeploy_happy_path_no_migrations_by_default(rig):
     assert any(c == "docker tag windy-test-api:local windy-test-api:last-good" for c in flat)
 
 
+def test_redeploy_pull_mode(rig, monkeypatch):
+    monkeypatch.setattr(hook_module, "BUILD_MODE", "pull")
+    base = rig["base"]
+    status, body = _call(base, "POST", "/hook/redeploy", body={"nonce": _nonce(base)})
+    names = [s["name"] for s in body["stages"]]
+    assert "pull" in names and "build" not in names, "pull mode fetches, never builds"
+    assert any(c[-2:] == ["pull", "test-api"] for c in rig["runner"].calls)
+
+
 def test_redeploy_migrate_cmd_optional(rig, monkeypatch):
     monkeypatch.setattr(hook_module, "MIGRATE_CMD", ["alembic", "upgrade", "head"])
     base = rig["base"]
