@@ -6,20 +6,65 @@
   "mcp_protocol": "2025-06-18",
   "$comment": "Windy Clone ops surface — Class C, clean single-service replication (Mind/Search/Mail pattern, no wrinkle). Product API (orders, clones, previews, soul-file export — user-scoped, money-adjacent) stays OUT per §2. Reads bound via transport on https://windyclone.ai. get_capabilities maps to the provider catalog: a clone marketplace with ZERO providers is degraded-while-looking-alive — same honest-capability logic as Search's zero-bridges probe. Rev 2026-07-13 (gap-closing, replicating windy-mind #60 / windy-search #61 / windy-mail #84): get_logs + get_config + run_selftest SHIPPED as the /ops/* trio (auth: Clone's own citizens dependency — Pro JWT). get_logs is content-free BY CONSTRUCTION (fixed vocabulary; never a clone name, identity, audio metadata, or raw provider text). get_config surfaces DEV_MODE explicitly — in production that flag is an auth bypass and the FIRST thing to check. run_selftest resolves + prices a DUMMY order through the provider registry (the exact decision path order-creation takes) plus a DB round-trip — NO provider API call, NO order row, NO purchase; verdict 60s-cached, `passed` per the invoke-envelope rule. Mutating gaps: port the windy-mind ops-hook (#61) to the Clone EC2. DEPLOY STATUS: merged; live after the Grant-gated deploy — probe before trusting mid-incident.",
   "baseline_mapping": {
-    "get_health": { "status": "implemented", "maps_to": "GET /health" },
-    "get_status": { "status": "implemented", "maps_to": "GET /version", "note": "full deployment identity: version, commit sha, build timestamp, started_at, environment." },
-    "get_capabilities": { "status": "implemented", "maps_to": "GET /api/v1/providers", "note": "the provider catalog IS the capability probe — zero providers = degraded marketplace." },
-    "get_config": { "status": "implemented", "maps_to": "GET /ops/config", "note": "provider keys + identity/OAuth/Eternitas/soul-signing wiring as booleans, plus the DEV_MODE flag (auth bypass if on in prod) — closed 2026-07-13." },
-    "get_logs": { "status": "implemented", "maps_to": "GET /ops/logs", "note": "content-free ring, fixed vocabulary; never voice samples or soul-file content — closed 2026-07-13." },
-    "run_selftest": { "status": "implemented", "maps_to": "POST /ops/selftest", "note": "resolves + prices a dummy elevenlabs order via the registry + DB round-trip; NO purchase, NO order row; 60s cache — closed 2026-07-13." },
-    "reconnect": { "status": "unsupported", "note": "stateless service." },
-    "restart_app": { "status": "gap", "note": "out-of-band; port the windy-mind ops-hook (windy-mind #61 — out-of-patient systemd unit, bearer + confirm nonce) to the Clone EC2." },
-    "enter_safe_mode": { "status": "unsupported" },
-    "exit_safe_mode": { "status": "unsupported" },
-    "set_setting": { "status": "gap" },
-    "check_for_update": { "status": "gap", "note": "wire to the Steamroller fleet version manifest (L2)." },
-    "apply_update": { "status": "gap", "note": "SSH-free health-gated redeploy; §7. The windy-mind ops-hook (#61: rebuild + last-good rollback + sha attestation) is the pattern to port." },
-    "reset_to_defaults": { "status": "unsupported", "note": "NEVER — holds users' clone orders and soul-file exports." }
+    "get_health": {
+      "status": "implemented",
+      "maps_to": "GET /health"
+    },
+    "get_status": {
+      "status": "implemented",
+      "maps_to": "GET /version",
+      "note": "full deployment identity: version, commit sha, build timestamp, started_at, environment."
+    },
+    "get_capabilities": {
+      "status": "implemented",
+      "maps_to": "GET /api/v1/providers",
+      "note": "the provider catalog IS the capability probe — zero providers = degraded marketplace."
+    },
+    "get_config": {
+      "status": "implemented",
+      "maps_to": "GET /ops/config",
+      "note": "provider keys + identity/OAuth/Eternitas/soul-signing wiring as booleans, plus the DEV_MODE flag (auth bypass if on in prod) — closed 2026-07-13."
+    },
+    "get_logs": {
+      "status": "implemented",
+      "maps_to": "GET /ops/logs",
+      "note": "content-free ring, fixed vocabulary; never voice samples or soul-file content — closed 2026-07-13."
+    },
+    "run_selftest": {
+      "status": "implemented",
+      "maps_to": "POST /ops/selftest",
+      "note": "resolves + prices a dummy elevenlabs order via the registry + DB round-trip; NO purchase, NO order row; 60s cache — closed 2026-07-13."
+    },
+    "reconnect": {
+      "status": "unsupported",
+      "note": "stateless service."
+    },
+    "restart_app": {
+      "status": "gap",
+      "note": "out-of-band; port the windy-mind ops-hook (windy-mind #61 — out-of-patient systemd unit, bearer + confirm nonce) to the Clone EC2."
+    },
+    "enter_safe_mode": {
+      "status": "unsupported"
+    },
+    "exit_safe_mode": {
+      "status": "unsupported"
+    },
+    "set_setting": {
+      "status": "gap"
+    },
+    "check_for_update": {
+      "status": "implemented",
+      "maps_to": "GET /ops/check-update",
+      "note": "resolves the running version against admin's /v1/fleet-versions; status + literal remediation. Closed 2026-07-13."
+    },
+    "apply_update": {
+      "status": "gap",
+      "note": "SSH-free health-gated redeploy; §7. The windy-mind ops-hook (#61: rebuild + last-good rollback + sha attestation) is the pattern to port."
+    },
+    "reset_to_defaults": {
+      "status": "unsupported",
+      "note": "NEVER — holds users' clone orders and soul-file exports."
+    }
   },
   "tools": [
     {
@@ -27,16 +72,30 @@
       "tier": "auto_allow",
       "baseline_status": "implemented",
       "description": "The FIRST call when Windy Clone seems down. Liveness of the clone service: returns healthy + service + version if the API process is up.",
-      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
-      "transport": { "method": "GET", "path": "/health" }
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "transport": {
+        "method": "GET",
+        "path": "/health"
+      }
     },
     {
       "name": "get_status",
       "tier": "auto_allow",
       "baseline_status": "implemented",
       "description": "Read Windy Clone's deployment identity — which build is serving right now, its commit, when it started, and which environment. Use this to confirm a deploy actually landed.",
-      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
-      "transport": { "method": "GET", "path": "/version" }
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "transport": {
+        "method": "GET",
+        "path": "/version"
+      }
     },
     {
       "name": "get_capabilities",
@@ -46,62 +105,155 @@
       "inputSchema": {
         "type": "object",
         "properties": {
-          "type": { "type": "string", "description": "Filter by provider type; omit or 'all' for everything." }
+          "type": {
+            "type": "string",
+            "description": "Filter by provider type; omit or 'all' for everything."
+          }
         },
         "additionalProperties": false
       },
-      "transport": { "method": "GET", "path": "/api/v1/providers", "arg_mapping": "query" }
+      "transport": {
+        "method": "GET",
+        "path": "/api/v1/providers",
+        "arg_mapping": "query"
+      }
     },
     {
       "name": "get_logs",
       "tier": "auto_allow",
       "baseline_status": "implemented",
       "description": "Read Windy Clone's recent operational events — server starts and self-test results by category. Content-free by construction: the log can only ever hold fixed event names and codes — never a clone name, a user identity, audio metadata, or raw provider error text. Requires your Windy account token.",
-      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
       "returns": {
         "type": "object",
         "properties": {
-          "count": { "type": "number" },
-          "entries": { "type": "array", "description": "[{ts, level, event, code?}] — fixed vocabulary only" }
+          "count": {
+            "type": "number"
+          },
+          "entries": {
+            "type": "array",
+            "description": "[{ts, level, event, code?}] — fixed vocabulary only"
+          }
         }
       },
-      "transport": { "method": "GET", "path": "/ops/logs" }
+      "transport": {
+        "method": "GET",
+        "path": "/ops/logs"
+      }
     },
     {
       "name": "get_config",
       "tier": "auto_allow",
       "baseline_status": "implemented",
       "description": "Read Windy Clone's effective runtime configuration with every secret redacted to a boolean: which clone providers (ElevenLabs, HeyGen, Resemble) actually hold keys, whether Pro identity, OAuth, Eternitas, and soul-file signing are wired — and whether DEV_MODE is on, which in production would mean auth is bypassed and is the first thing to check. Requires your Windy account token.",
-      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
       "returns": {
         "type": "object",
         "properties": {
-          "dev_mode": { "type": "boolean", "description": "TRUE in production = auth bypass — investigate immediately" },
-          "providers": { "type": "object", "description": "{provider: key-configured bool} — never key material" },
-          "pro_identity_configured": { "type": "boolean" },
-          "oauth_configured": { "type": "boolean" },
-          "eternitas_configured": { "type": "boolean" },
-          "soul_signing_configured": { "type": "boolean" }
+          "dev_mode": {
+            "type": "boolean",
+            "description": "TRUE in production = auth bypass — investigate immediately"
+          },
+          "providers": {
+            "type": "object",
+            "description": "{provider: key-configured bool} — never key material"
+          },
+          "pro_identity_configured": {
+            "type": "boolean"
+          },
+          "oauth_configured": {
+            "type": "boolean"
+          },
+          "eternitas_configured": {
+            "type": "boolean"
+          },
+          "soul_signing_configured": {
+            "type": "boolean"
+          }
         }
       },
-      "transport": { "method": "GET", "path": "/ops/config" }
+      "transport": {
+        "method": "GET",
+        "path": "/ops/config"
+      }
     },
     {
       "name": "run_selftest",
       "tier": "auto_allow",
       "baseline_status": "implemented",
       "description": "Actively exercise Windy Clone's order decision path WITHOUT buying anything: resolve a dummy order through the provider registry exactly the way real order creation does (provider lookup, wiring check, public starting price) plus a real database round-trip. Nothing is created, uploaded, or charged — pass/fail per stage. Verdict cached 60 seconds. Requires your Windy account token.",
-      "inputSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
       "returns": {
         "type": "object",
         "properties": {
-          "passed": { "type": "boolean", "description": "true only when every stage passed ('passed', not 'ok' — top-level ok is reserved for the invoke envelope)" },
-          "stages": { "type": "array", "description": "[{name: registry|resolve_dummy_order|db, ok, detail}]" },
-          "duration_ms": { "type": "number" },
-          "cached": { "type": "boolean" }
+          "passed": {
+            "type": "boolean",
+            "description": "true only when every stage passed ('passed', not 'ok' — top-level ok is reserved for the invoke envelope)"
+          },
+          "stages": {
+            "type": "array",
+            "description": "[{name: registry|resolve_dummy_order|db, ok, detail}]"
+          },
+          "duration_ms": {
+            "type": "number"
+          },
+          "cached": {
+            "type": "boolean"
+          }
         }
       },
-      "transport": { "method": "POST", "path": "/ops/selftest" }
+      "transport": {
+        "method": "POST",
+        "path": "/ops/selftest"
+      }
+    },
+    {
+      "name": "check_for_update",
+      "tier": "auto_allow",
+      "baseline_status": "implemented",
+      "description": "Check whether a newer Windy Clone build is available. Resolves the running version against the fleet's version manifest and reports current, update-available (the notes say what it fixes), or must-update (below the minimum supported version), with the literal next step when an update exists. Read-only — never deploys; applying is the separate always-confirm apply_update.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "returns": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "current | update-available | must-update | unknown"
+          },
+          "installed": {
+            "type": "string"
+          },
+          "current": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "remediation": {
+            "type": "string"
+          }
+        }
+      },
+      "transport": {
+        "method": "GET",
+        "path": "/ops/check-update"
+      }
     }
   ]
 }

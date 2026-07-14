@@ -5,6 +5,35 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-13 (night) — GAP-CLOSING #12: check_for_update — REPLICATED FLEET-WIDE (🏁 every Class-C platform)
+
+- Replicated the Mind check_for_update template (windy-mind #62) across
+  the whole cloud fleet — same helper, product name the only change:
+  - **Python** (identical semver+resolve inline in ops.py): Search #64,
+    Clone #60, admin #29 (resolves its OWN version — publisher AND
+    consumer; loopback fleet URL), Mail #86.
+  - **Node** (JS equivalent, fetch-based): Translate windy-pro #236
+    (server.js, behind the token wall), Chat #145 (onboarding ops
+    router at /api/v1/ops/check-update).
+- Each: GET .../check-update → resolve running version vs admin's
+  /v1/fleet-versions → status (current|update-available|must-update|
+  unknown) + notes + LITERAL remediation. Remediation is
+  platform-appropriate: cloud hosts w/ an ops-hook → "call apply_update";
+  Translate (no hook) → Grant-gated systemd restart; Chat → per-service
+  redeploy. Read-only; each behind its platform's existing auth.
+- **🏁 EVERY Class-C platform now serves check_for_update.** The
+  Steamroller is fully closed-loop fleet-wide: admin publishes (all 9
+  products seeded, #28) → every platform resolves → remediation points
+  at the healing knob.
+- Fixtures synced (6); chat procession test updated (3→4 tools:
+  aggregator triad + check_for_update). make check 82.
+- Proven per platform: 4-5 new tests each (all statuses + honest-
+  unreachable + auth), full suites green (Search 346 / Clone 219 /
+  admin 145 / Mail 589 / Translate 12 / Chat ops 14).
+- **🔴 GRANT-GATED:** each platform's redeploy.
+- **Next:** Chat per-service reconnect knobs, Mail canary-mailbox
+  selftest, Mind bespoke-ops-hook→canon swap, OR Word Class-D (LAST).
+
 ## 2026-07-13 (night) — GAP-CLOSING #11: check_for_update — Steamroller RECEIVING half wired (Mind template)
 
 - **windy-admin #28: seeded the 7 cloud services** into the fleet-version

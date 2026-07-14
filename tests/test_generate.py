@@ -378,11 +378,13 @@ def test_chat_procession_multiservice(tmp_path):
     fx = ROOT / "schema" / "fixtures" / "windy-chat" / "ops.mcp.v1.json"
     m = json.loads(fx.read_text())
     assert validate_manifest(m).ok
-    assert len(m["tools"]) == 3  # the aggregator triad
+    assert len(m["tools"]) == 4  # the aggregator triad + check_for_update
     names = {t["name"] for t in m["tools"]}
-    assert names == {"get_health", "get_status", "get_capabilities"}
-    # all three bind to the ONE aggregator route (MULTI-SERVICE-OPS pattern)
-    assert {t["transport"]["path"] for t in m["tools"]} == {"/api/v1/ops/health"}
+    assert names == {"get_health", "get_status", "get_capabilities", "check_for_update"}
+    # the triad binds to the ONE aggregator route (MULTI-SERVICE-OPS pattern);
+    # check_for_update (Steamroller, 2026-07-13) is the one non-aggregator tool.
+    triad = {t["transport"]["path"] for t in m["tools"] if t["name"] != "check_for_update"}
+    assert triad == {"/api/v1/ops/health"}
     assert "$headline_gap" in m and "CLOSED" in m["$headline_gap"]
     wv = tmp_path / "weave.json"
     wv.write_text(json.dumps(dict(MIND_WEAVE, product="windy-chat",
