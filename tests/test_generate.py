@@ -221,9 +221,9 @@ def test_word_baseline_gaps_are_not_advertised():
     # (get_logs graduated gap→implemented 2026-07-13, windy-pro #237: it's now
     # a real route, GET /control/logs, so it IS advertised.)
     names = {t["name"] for t in _word_manifest()["tools"]}
-    for shipped in ("get_logs", "get_capabilities"):
-        assert shipped in names, f"{shipped} shipped (windy-pro #237/#238) — must be advertised now"
-    for gap in ("run_selftest", "apply_update", "reset_to_defaults",
+    for shipped in ("get_logs", "get_capabilities", "run_selftest"):
+        assert shipped in names, f"{shipped} shipped (windy-pro #237/#238/#239) — must be advertised now"
+    for gap in ("apply_update", "reset_to_defaults",
                 "enter_safe_mode", "exit_safe_mode", "reconnect"):
         assert gap not in names, f"{gap} is a documented gap, must not be advertised"
 

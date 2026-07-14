@@ -5,6 +5,30 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-14 — GAP-CLOSING #16: WORD run_selftest (3rd Class-D knob; first non-read-only)
+
+- **windy-pro #239: Word run_selftest** — the FIRST non-read-only Word knob,
+  but via the FILE-based engine path, not the mic. Bundled a 112KB speech
+  clip (assets/selftest-clip.wav = the QA suite's test_short.wav). New
+  testable doctor/selftest.js: runSelftest({engineRunning, clipPath,
+  transcribe}) dependency-injected → stages engine→clip→transcribe;
+  CONTENT-FREE (reports transcript LENGTH, never the text); `passed`
+  envelope rule. ⚠️ main.js: ONE additive route POST /control/selftest
+  resolving the bundled clip + wiring the existing _transcribeAudioFile
+  (ffmpeg → WebSocket engine — file path, NO mic) + pythonProcess. NOTHING
+  in recording/paste/Wayland/focus; node --check clean. Manifest 15→16; Word
+  gap-test updated (get_logs+get_capabilities+run_selftest advertised, 5 gaps
+  remain). 7 new tests; Word suites 37/37.
+- make check 87. 🔴 Grant: Word desktop rebuild.
+- **WORD REMAINING: 5 baseline gaps (reconnect, enter/exit_safe_mode,
+  apply_update, reset_to_defaults) + SUPERVISOR+resurrection (§3.6, biggest)
+  + GET /tools + ~90-route parity + surfaces.json.** The 3 shipped are all
+  reads/canary (safe); the next 5 are increasingly MUTATING — reconnect
+  (re-establish engine link) is the next-safest; safe-mode/reset/apply_update
+  need the most care.
+- **Next:** Word reconnect (engine re-link, moderate risk) OR the supervisor
+  (biggest) OR Mail canary-mailbox selftest OR pause for review.
+
 ## 2026-07-14 — GAP-CLOSING #15: WORD get_capabilities (2nd Class-D baseline knob)
 
 - **windy-pro #238: Word get_capabilities** — tri-state per-FEATURE probe
