@@ -270,16 +270,19 @@ from themselves"):**
   sovereignty, not limit it).
 - Default policy = sovereign-permissive.
 
-**Flagged for Grant's explicit ratification:**
-- **The compromise informed-consent screen** (§5) — when a revoked agent may
-  be *hijacked*, do we show a one-time "here's the risk, it's your call"
-  before honoring, or drop even that to a pure after-the-fact notification?
-  (The only place "do anything on your own stuff" risks the owner being
-  *deceived* that the intruder is their agent.)
-- **Vouch-accountability** — should a human who repeatedly co-signs
-  upheld-abusive COMMONS actions take a standing hit? (Only bites in the
-  commons — never for anything on their own stuff.)
-- Whether the **rehab curve** (ADR-063) ships in tandem or deferred.
+**Ratified (Grant concurred 2026-07-14):**
+- **Compromise informed-consent = inform-once, then honor forever; never
+  refuse.** When a revoked agent may be hijacked, the owner sees a one-time
+  "here's the risk, it's your call" and from then on it just works.
+  (Build-time refinement, not a re-decision: re-inform on a new session /
+  after a long gap / on an escalating action, so a months-old "I understand"
+  can't quietly cover a fresh drain.)
+- **Vouch-accountability = commons-only.** A human who repeatedly co-signs
+  actions later upheld as abusive *in the commons* takes a standing hit
+  (needs a human-side integrity signal). It NEVER bites anything on their own
+  stuff — vouching for your own house is free.
+- **The rehab curve ships in tandem** → **ADR-063**, so trust that drops has a
+  principled, visible path back and one bad afternoon is never a life sentence.
 
 Nothing in this ADR changes any repo yet — it defines the contract. The build
 is gated on the prerequisite + these ratifications.
