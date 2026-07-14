@@ -248,6 +248,13 @@ given by the user via the confirmer, never assumed. Denials are structured,
 never silent (Untrusted → denied + owner notified). Band filtering applies to
 *discovery* too: a low-band caller never even sees the high-tier tools.
 
+**The owner-sovereignty exception (ADR-062).** Band-gating governs the
+*commons*. On a caller's OWN resources, a verified human owner co-signature
+(via the Eternitas authenticator) can elevate a low-EI agent — so a dropped
+score never locks an owner out of their own house. Scoped to owned resources,
+audited to the human, never restoring autonomy or reaching the commons; the
+always-confirm floor still holds. Full design: `docs/ADR-062-owner-sovereignty-override.md`.
+
 ### 3.6 The doctor is not in the patient
 The control surface must be hosted by a process the product cannot take
 down. Class D: out-of-process supervisor + OS resurrection (heartbeat file
