@@ -1,8 +1,10 @@
 {
   "auth": "bearer-ept-or-windy-jwt",
-  "class": "cloud-service",
+  "class": "cloud",
   "contract": "windy-cloud-sites.mcp.v1",
+  "doctrine": "ADR-060 v1.0",
   "endpoint": "/mcp",
+  "product": "windy-cloud-sites",
   "protocolVersion": "2025-06-18",
   "tools": [
     {

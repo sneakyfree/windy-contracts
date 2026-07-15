@@ -1,0 +1,149 @@
+{
+  "auth": "bearer-ept-or-windy-jwt",
+  "baseline_mapping": {
+    "apply_update": {
+      "note": "SSH-free health-gated redeploy via the ops-hook (rebuild + last-good rollback + sha attestation). Grant-gated install.",
+      "status": "gap"
+    },
+    "check_for_update": {
+      "note": "Resolve running version against admin /v1/fleet-versions \u2014 wire when the cell is seeded into the fleet manifest.",
+      "status": "gap"
+    },
+    "enter_safe_mode": {
+      "note": "No runtime mode to toggle on this control plane.",
+      "status": "unsupported"
+    },
+    "exit_safe_mode": {
+      "note": "See enter_safe_mode.",
+      "status": "unsupported"
+    },
+    "get_capabilities": {
+      "status": "implemented"
+    },
+    "get_config": {
+      "maps_to": "/ops/config",
+      "status": "implemented"
+    },
+    "get_health": {
+      "maps_to": "/health/full",
+      "status": "implemented"
+    },
+    "get_logs": {
+      "maps_to": "/ops/logs",
+      "status": "implemented"
+    },
+    "get_status": {
+      "maps_to": "/version",
+      "status": "implemented"
+    },
+    "reconnect": {
+      "note": "DB pool self-heals (pool_pre_ping); nothing to manually reconnect.",
+      "status": "unsupported"
+    },
+    "reset_to_defaults": {
+      "note": "Domains hold real ownership \u2014 there is no safe factory-reset.",
+      "status": "unsupported"
+    },
+    "restart_app": {
+      "note": "Out-of-band: needs the host ops-hook (systemd unit outside the container, bearer + confirm nonce) \u2014 Grant-gated install per host.",
+      "status": "gap"
+    },
+    "run_selftest": {
+      "maps_to": "/ops/selftest",
+      "status": "implemented"
+    }
+  },
+  "class": "cloud",
+  "contract": "ops.mcp.v1",
+  "doctrine": "ADR-060 v1.0",
+  "endpoint": "/mcp",
+  "product": "windy-cloud-domains",
+  "protocolVersion": "2025-06-18",
+  "tools": [
+    {
+      "baseline_status": "implemented",
+      "description": "Runtime config as booleans \u2014 secrets NEVER surfaced.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "get_config",
+      "tier": "ask_first",
+      "transport": {
+        "method": "GET",
+        "path": "/ops/config"
+      }
+    },
+    {
+      "baseline_status": "implemented",
+      "description": "The FIRST call when the domains service seems down. Liveness: { ok, database, registrar_balance_ok, speak }.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "get_health",
+      "tier": "auto_allow",
+      "transport": {
+        "method": "GET",
+        "path": "/health/full"
+      }
+    },
+    {
+      "baseline_status": "implemented",
+      "description": "Recent activity \u2014 CONTENT-FREE: job kinds/states + event counts only, never order or user data. { jobs, webhook_events, speak }.",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "default": 20,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "name": "get_logs",
+      "tier": "auto_allow",
+      "transport": {
+        "method": "GET",
+        "path": "/ops/logs"
+      }
+    },
+    {
+      "baseline_status": "implemented",
+      "description": "What this service is wired for: registrar live/mock, membrane + telemetry configured. Booleans only.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "get_ops_capabilities",
+      "tier": "auto_allow"
+    },
+    {
+      "baseline_status": "implemented",
+      "description": "Deployment identity: { service, commit_sha, environment }.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "get_status",
+      "tier": "auto_allow",
+      "transport": {
+        "method": "GET",
+        "path": "/version"
+      }
+    },
+    {
+      "baseline_status": "implemented",
+      "description": "Runs a real canary through the pricing + registrar path (mock-safe, no purchase, no side effects). SAFE TO RUN.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "run_selftest",
+      "tier": "auto_allow",
+      "transport": {
+        "method": "GET",
+        "path": "/ops/selftest"
+      }
+    }
+  ]
+}
