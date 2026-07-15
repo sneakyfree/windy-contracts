@@ -214,6 +214,14 @@ def test_woven_packet_is_sovereign_override_aware(word_woven: Path):
     assert 'get("sovereign_override_required") is True' in twin
 
 
+def test_woven_packet_emits_structured_content(word_woven: Path):
+    # MCP 2025-06-18: object results carry structuredContent (machine-readable)
+    # alongside the text mirror — the windy-calendar lane's flagged gap.
+    server = (word_woven / "mcp-packet" / "src" / "server.js").read_text()
+    assert "structuredContent: result" in server
+    assert "typeof result === 'object'" in server
+
+
 @pytest.mark.skipif(shutil.which("node") is None, reason="node not on PATH")
 def test_word_generated_js_parses(word_woven: Path):
     for rel in ("src/client.js", "src/index.js"):
