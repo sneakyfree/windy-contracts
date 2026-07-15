@@ -5,6 +5,24 @@ entry here — a session that didn't update the ledger didn't happen.
 
 ---
 
+## 2026-07-14 — windy-calendar audit (STRONG PASS) + Loom structuredContent fix
+
+- **Audited windy-calendar** (~/Desktop/Grant's Folder/windy-calendar) vs the
+  doctrine. VERDICT: model citizen. Manifest validates 0 errors against the
+  CURRENT Loom (26 tools); full 13-knob healing baseline (only restart_app/
+  apply_update absent = out-of-band for CF Pages, should mark unsupported to
+  clear 2 warnings) + comprehensive product knobs (list/get/book/reschedule/
+  cancel_appointment, get/set_availability, block_time, get_booking_page,
+  get_calendar_feed) covering grandma's use cases; native /tools + /invoke
+  (functions/); grandma-legible utterance-first descriptions; money→
+  always_confirm; settings+undo; safe-mode. Both languages ✓.
+- **Loom structuredContent fix (windy-contracts #40):** the Calendar lane's
+  flagged doctrine-lane gap — woven packet returned text-only; now emits
+  structuredContent (MCP 2025-06-18) + text mirror, stdio + remote + override.
+  Proven live. Benefits every platform. make check 97.
+- Calendar lane can re-weave to pick up structuredContent. Their-side: mark
+  restart_app/apply_update unsupported (clears the 2 warnings).
+
 ## 2026-07-14 — Eternitas trust-build spec (trust thread design-COMPLETE)
 
 - **windy-contracts #39.** docs/handoffs/ETERNITAS-TRUST-BUILD-2026-07-14.md
