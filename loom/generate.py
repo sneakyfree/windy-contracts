@@ -228,15 +228,21 @@ export function buildServer(authOverride = null) {{
     }}
     const result = await invoke(name, args, 15000, routeTable, authOverride);
     const text = JSON.stringify(result, null, 2);
+    // MCP 2025-06-18: machine-readable result. The agent gets the object
+    // directly (structuredContent) AND the serialized text mirror for
+    // backwards-compat (spec: a tool returning structuredContent SHOULD also
+    // return the JSON as text). Object results only — strings/primitives stay
+    // text-only.
+    const structured = (result && typeof result === 'object') ? {{ structuredContent: result }} : {{}};
     // Sovereign-override: an actionable next step ("owner co-sign needed"),
     // NOT a failure — return it as normal content (isError:false) with a clear
     // banner so the agent relays it to the owner instead of retrying/giving up.
     if (result && result.sovereign_override_required === true) {{
-      return {{ content: [{{ type: 'text', text: `OWNER APPROVAL REQUIRED — this is your resource; approve to proceed.\\n${{text}}` }}] }};
+      return {{ ...structured, content: [{{ type: 'text', text: `OWNER APPROVAL REQUIRED — this is your resource; approve to proceed.\\n${{text}}` }}] }};
     }}
     return result && result.ok === false
-      ? {{ isError: true, content: [{{ type: 'text', text }}] }}
-      : {{ content: [{{ type: 'text', text }}] }};
+      ? {{ isError: true, ...structured, content: [{{ type: 'text', text }}] }}
+      : {{ ...structured, content: [{{ type: 'text', text }}] }};
   }});
 
   return server;
