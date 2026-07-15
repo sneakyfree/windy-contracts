@@ -1,7 +1,7 @@
 # ADR-064 — Eternitas is the sole birth-certificate authority
 
-> **2026-07-15. Status: PROPOSED (Grant-gated).** Grounded in a 2026-07-15
-> code audit of `eternitas/services/certificate_pdf.py` +
+> **2026-07-15. Status: ACCEPTED (Grant ratified 2026-07-15).** Grounded in a
+> 2026-07-15 code audit of `eternitas/services/certificate_pdf.py` +
 > `eternitas/routes/certificates.py` + `windy-agent/src/windyfly/birth_certificate.py`.
 > Amends nothing; establishes a decision before HiFly forks `windy-agent`.
 
@@ -128,14 +128,23 @@ thin ceremony client, not a certificate generator.
 bottom-overlap (footer overprinting the Waveform section) stands regardless
 of which renderer survives — a certificate must render cleanly either way.
 
-## 6. Decisions for Grant
+## 6. Decisions (Grant ratified 2026-07-15)
 
-- **Ratify the principle?** Eternitas = sole certificate authority; hatchers
-  feed + render.
-- **Who renders the pretty PDF** — Eternitas returns rich data and the
-  hatcher renders (keeps Windy Fly's nicer layout), or Eternitas renders the
-  PDF itself and hatchers just display it? (Recommendation: hatcher renders
-  from signed data — keeps presentation flexible, keeps issuance central.)
-- **Keepsake allowed?** May a hatcher still show an unsigned "welcome" card
-  pre-issuance, as long as it isn't titled a certificate and names no
-  registry? (Recommendation: yes, clearly labeled "pending.")
+1. **Principle: ACCEPTED.** Eternitas is the sole certificate authority;
+   hatchers feed the ceremony and render the signed result.
+2. **Eternitas renders the ONE canonical certificate** (revised from the
+   draft's "hatcher renders"). The passport-booklet model: a single
+   Eternitas-rendered document that looks the same everywhere is the trust
+   signal — recognition through consistency, the signature bound to the
+   pixels, and one renderer instead of N (the OSS fork ships a thin client
+   that cannot drift). Windy Fly's richer layout is **ported into Eternitas's
+   renderer** so the canonical certificate is also the good-looking one.
+   Eternitas continues to return structured signed data (fingerprint SVG,
+   signature, timestamp) so a hatcher can still show a **live ceremony view**
+   during hatching — but the permanent, downloadable certificate is
+   Eternitas's canonical signed PDF.
+3. **Pre-issuance keepsake: ALLOWED, guardrailed.** A hatcher may show a
+   "hatching… certificate pending" live view (offline-tolerant — the passport
+   is already minted). It must NEVER title itself a certificate, NEVER show a
+   signature (real or fake), and NEVER name a competing registry. On issuance
+   the hatcher hands over Eternitas's canonical signed document.
