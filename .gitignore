@@ -1,0 +1,4 @@
+
+# Python build artifacts (untracked 2026-07-30)
+__pycache__/
+*.pyc
